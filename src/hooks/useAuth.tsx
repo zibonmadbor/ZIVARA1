@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         try {
           const token = await firebaseUser.getIdToken();
+          localStorage.setItem("zivara_token", token);
           const syncedUser = await syncBackendUser(firebaseUser, token);
           setUser(syncedUser);
         } catch (err) {
@@ -83,11 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string): Promise<{ error?: string }> => {
+  const signIn = async (email: string, password: string): Promise<{ error?: string, user?: DBUser }> => {
     try {
       setIsLoading(true);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const token = await userCredential.user.getIdToken();
+      localStorage.setItem("zivara_token", token);
       
       // Let onAuthStateChanged handle setting user, or sync immediately
       const syncedUser = await syncBackendUser(userCredential.user, token);
@@ -95,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: "Failed to load user profile from Express server." };
       }
       setUser(syncedUser);
-      return {};
+      return { user: syncedUser };
     } catch (err: any) {
       console.error("Sign-in error:", err);
       let errorMsg = "Invalid email or password.";
@@ -121,11 +123,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // 1. Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken();
-      
-      // 2. Call backend /api/auth/register to register in MongoDB
+      let firebaseUser: FirebaseUser;
+      let token: string;
+
+      try {
+        // 1. Create user in Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        firebaseUser = userCredential.user;
+        token = await firebaseUser.getIdToken();
+      } catch (fbErr: any) {
+        if (fbErr.code === "auth/email-already-in-use") {
+          // Firebase user exists (from a previous partial registration). Sign in instead.
+          try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            firebaseUser = userCredential.user;
+            token = await firebaseUser.getIdToken();
+          } catch (signInErr: any) {
+            return { error: "This email is already registered. Please log in instead." };
+          }
+        } else {
+          throw fbErr;
+        }
+      }
+
+      // 2. Call backend /api/auth/register to upsert in MongoDB
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -138,8 +159,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
 
       if (!res.ok) {
-        // Rollback Firebase user if backend fails
-        await userCredential.user.delete();
         return { error: data.message || "Registration failed on server" };
       }
 
@@ -149,8 +168,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err: any) {
       console.error("Sign-up error:", err);
       let errorMsg = "Registration failed. Try again.";
-      if (err.code === "auth/email-already-in-use") {
-        errorMsg = "This email is already in use.";
+      if (err.code === "auth/configuration-not-found") {
+        errorMsg = "Firebase Email/Password sign-in is not enabled. Enable it in Firebase Console.";
       } else if (err.message) {
         errorMsg = err.message;
       }
@@ -165,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       const result = await signInWithPopup(auth, googleProvider);
       const token = await result.user.getIdToken();
+      localStorage.setItem("zivara_token", token);
       
       const syncedUser = await syncBackendUser(result.user, token);
       if (!syncedUser) {

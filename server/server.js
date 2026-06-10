@@ -31,6 +31,10 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', require('./routes/products'));
 app.use('/api', require('./routes/ai'));
+app.use('/api', require('./routes/sliders'));
+app.use('/api', require('./routes/categories'));
+app.use('/api', require('./routes/settings'));
+app.use('/api/admin', require('./routes/adminUsers'));
 
 // Global Error Handler
 app.use((err, req, res, next) => {

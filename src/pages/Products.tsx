@@ -115,7 +115,7 @@ export default function Products() {
     }
 
     return result;
-  }, [category, filter, sort, priceRange, searchQuery]);
+  }, [category, filter, sort, priceRange, searchQuery, apiProducts, isLoading]);
 
   const updateFilter = (key: string, value: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -319,7 +319,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       transition={{ duration: 0.5, delay: index * 0.05 }}
       className="group"
     >
-      <Link to={`/product/${product.id}`} className="block">
+      <Link to={`/product/${product.slug || product.id}`} className="block">
         <div className="card-product relative aspect-[3/4] mb-4 overflow-hidden rounded-lg">
           <img
             src={product.image}

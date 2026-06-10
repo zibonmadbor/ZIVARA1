@@ -25,7 +25,6 @@ import { imageToBase64 } from "@/lib/imageUtils";
 
 interface TryOnResult {
   generatedImage: string;
-  analysis?: string;
   message?: string;
 }
 
@@ -86,12 +85,12 @@ export function useAITryOn() {
       if (data.provider === "fallback-simulator") {
         toast({
           title: "Simulator Result",
-          description: "Virtual try-on simulated successfully! Provide GEMINI_API_KEY in .env for real AI.",
+          description: "Virtual try-on simulated successfully! Provide REPLICATE_API_TOKEN in .env for real AI.",
         });
       } else {
         toast({
-          title: "Fashion Analysis Complete!",
-          description: "Gemini AI has analyzed your fit successfully!",
+          title: "Success!",
+          description: "Virtual try-on generated successfully!",
         });
       }
 
@@ -100,7 +99,6 @@ export function useAITryOn() {
 
       return {
         generatedImage: data.generatedImage,
-        analysis: data.analysis,
         message: data.message
       };
     } catch (err) {

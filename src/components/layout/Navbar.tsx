@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingBag, User, Menu, X } from "lucide-react";
+import { Search, ShoppingBag, User, Menu, X, ArrowRight } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 
 const navLinks = [
@@ -21,6 +21,23 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { itemCount } = useCart();
+  
+  const [settings, setSettings] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch settings", err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,13 +69,31 @@ export default function Navbar() {
     }
   };
 
+  const isNotificationActive = settings?.notificationActive;
+  const navbarTopOffset = isNotificationActive ? (isScrolled ? "0" : "40px") : "0";
+
   return (
     <>
+      {/* Top Notification Bar */}
+      {isNotificationActive && (
+        <div className="bg-primary text-primary-foreground h-10 flex items-center justify-center px-4 text-sm font-medium w-full z-50 fixed top-0 left-0 right-0">
+          <div className="flex items-center gap-2">
+            <span>{settings.notificationText}</span>
+            {settings.notificationLink && (
+              <Link to={settings.notificationLink} className="underline underline-offset-2 flex items-center gap-1 hover:text-white">
+                Shop Now <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        style={{ top: navbarTopOffset }}
+        className={`fixed left-0 right-0 z-40 transition-all duration-500 ${
           isScrolled
             ? "bg-background/95 backdrop-blur-md border-b border-border"
             : "bg-transparent"
@@ -78,7 +113,7 @@ export default function Navbar() {
             {/* Logo */}
             <Link to="/" className="flex items-center">
               <span className="text-2xl md:text-3xl font-display font-bold tracking-widest text-foreground">
-                ZIVARA
+                {settings?.storeName || "ZIVARA"}
               </span>
             </Link>
 
@@ -149,7 +184,7 @@ export default function Navbar() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-10">
                   <span className="text-2xl font-display font-bold tracking-widest">
-                    ZIVARA
+                    {settings?.storeName || "ZIVARA"}
                   </span>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}

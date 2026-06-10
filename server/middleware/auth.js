@@ -6,7 +6,7 @@ const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || '';
 
 // Client to dynamically fetch Google's public certificates for Firebase Auth
 const jwksClient = jwksRsa({
-  jwksUri: 'https://www.googleapis.com/serviceaccounts/v1/jwk/securetoken@system.gserviceaccount.com',
+  jwksUri: 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
   cache: true,
   cacheMaxEntries: 5,
   cacheMaxAge: 600000 // 10 minutes

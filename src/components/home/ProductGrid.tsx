@@ -1,8 +1,28 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingBag, Eye, Star } from "lucide-react";
-import { products, getNewArrivals, getBestSellers } from "@/data/products";
-import type { Product } from "@/data/products";
+
+interface Product {
+  id: string;
+  _id?: string;
+  name: string;
+  slug: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  subcategory: string;
+  image: string;
+  images: string[];
+  colors: string[];
+  sizes: string[];
+  description?: string;
+  isNew: boolean;
+  isBestSeller: boolean;
+  isSale: boolean;
+  rating: number;
+  reviews: number;
+}
 
 interface ProductGridProps {
   title: string;
@@ -19,15 +39,72 @@ export default function ProductGrid({
   limit = 6,
   showViewAll = true,
 }: ProductGridProps) {
-  let displayProducts: Product[] = products;
-  
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch("/api/products");
+        if (res.ok) {
+          const data = await res.json();
+          const mapped: Product[] = data.map((p: any) => ({
+            ...p,
+            id: p._id || p.id,
+          }));
+          setProducts(mapped);
+        }
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  let displayProducts = [...products];
+
   if (filter === "new") {
-    displayProducts = getNewArrivals();
+    displayProducts = displayProducts.filter((p) => p.isNew);
   } else if (filter === "best") {
-    displayProducts = getBestSellers();
+    displayProducts = displayProducts.filter((p) => p.isBestSeller);
+  } else if (filter === "sale") {
+    displayProducts = displayProducts.filter((p) => p.isSale);
   }
-  
+
   displayProducts = displayProducts.slice(0, limit);
+
+  if (isLoading) {
+    return (
+      <section className="section-padding bg-background">
+        <div className="container-premium">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+            <div>
+              {subtitle && (
+                <span className="text-sm font-medium tracking-widest text-primary uppercase">
+                  {subtitle}
+                </span>
+              )}
+              <h2 className="text-3xl md:text-5xl font-display font-bold text-foreground mt-2">
+                {title}
+              </h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(limit)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-[3/4] bg-muted rounded-lg mb-4" />
+                <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                <div className="h-4 bg-muted rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="section-padding bg-background">
@@ -76,7 +153,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="group"
     >
-      <Link to={`/product/${product.id}`} className="block">
+      <Link to={`/product/${product.slug}`} className="block">
         <div className="card-product relative aspect-[3/4] mb-4 overflow-hidden rounded-lg">
           <img
             src={product.image}
@@ -163,7 +240,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
               <span
                 key={i}
                 className="w-4 h-4 rounded-full border border-border"
-                style={{ backgroundColor: color }}
+                title={color}
               />
             ))}
             {product.colors.length > 4 && (

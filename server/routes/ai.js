@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// We'll use native fetch API available in modern Node.js
 
-// Helper to extract base64 and mime type from Data URI
+// Helper to extract clean base64 data and mime type from Data URI
 function parseDataURI(dataUri) {
   const matches = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
   if (!matches || matches.length !== 3) {
@@ -14,60 +14,15 @@ function parseDataURI(dataUri) {
   };
 }
 
-// Helper: sleep for retry delays
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Models to try in order (fallback chain)
-const GEMINI_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash'
-];
-
-// Try calling Gemini with automatic model fallback and retry
-async function callGeminiWithFallback(genAI, prompt, imageParts) {
-  for (const modelName of GEMINI_MODELS) {
-    // Each model gets 2 attempts
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        console.log(`AI Try-On: Trying model "${modelName}" (attempt ${attempt}/2)...`);
-        const model = genAI.getGenerativeModel({ model: modelName });
-        const result = await model.generateContent([prompt, ...imageParts]);
-        const response = await result.response;
-        const text = response.text();
-        console.log(`AI Try-On: Success with model "${modelName}"!`);
-        return { text, modelUsed: modelName };
-      } catch (err) {
-        const status = err.status || 0;
-        console.warn(`AI Try-On: Model "${modelName}" attempt ${attempt} failed (HTTP ${status}): ${err.message}`);
-
-        // If 503 (overloaded) or 429 (rate limit), wait and retry or try next model
-        if (status === 503 || status === 429) {
-          if (attempt < 2) {
-            console.log('AI Try-On: Waiting 3s before retrying...');
-            await sleep(3000);
-          }
-          // After 2nd attempt, fall through to next model
-        } else {
-          // For other errors (400, 403, etc.), skip to next model immediately
-          break;
-        }
-      }
-    }
-  }
-  // All models exhausted
-  return null;
-}
-
 // @route   POST /api/ai/tryon
-// @desc    Perform virtual AI Try-On using Gemini for fashion analysis
+// @desc    Perform true Image-to-Image Virtual Try-On using Gemini 2.5 Flash Image API
 // @access  Public
 router.post('/ai/tryon', async (req, res) => {
   try {
-    const { userImage, clothingImage, clothingName } = req.body;
+    const { userImage, clothingImage } = req.body;
 
     if (!userImage || !clothingImage) {
-      return res.status(400).json({ message: 'User photo and clothing images are required' });
+      return res.status(400).json({ message: 'User photo and clothing image are required' });
     }
 
     const geminiKey = process.env.GEMINI_API_KEY;
@@ -75,17 +30,17 @@ router.post('/ai/tryon', async (req, res) => {
     if (!geminiKey) {
       // Fallback Simulator if no key is provided
       console.log('AI Try-On: [FALLBACK MODE] Simulating processing...');
-      await sleep(2500);
+      await new Promise(resolve => setTimeout(resolve, 2500));
       return res.json({
-        generatedImage: userImage,
-        analysis: 'Mock simulation success! Provide GEMINI_API_KEY in .env for real AI VTON analysis.',
+        generatedImage: userImage, // Mock returning the same image
+        message: 'Mock simulation success! Provide GEMINI_API_KEY in .env for real AI VTON generation.',
         provider: 'fallback-simulator'
       });
     }
 
-    console.log('AI Try-On: Launching Gemini fashion analysis...');
-    
-    // Parse the data URIs
+    console.log('AI Try-On: Launching Gemini 2.5 Flash Image generation...');
+
+    // Extract clean base64 and mime_type
     const parsedUserImg = parseDataURI(userImage);
     const parsedClothingImg = parseDataURI(clothingImage);
 
@@ -93,62 +48,105 @@ router.post('/ai/tryon', async (req, res) => {
       return res.status(400).json({ message: 'Images must be valid base64 Data URIs' });
     }
 
-    // Initialize Gemini SDK
-    const genAI = new GoogleGenerativeAI(geminiKey);
+    // Exact JSON payload schema requested by the user
+    const requestBody = {
+      contents: [{
+        role: "user",
+        parts: [
+          { 
+            text: `You are an AI fashion stylist. Create a realistic image where the person in the first image is styled with the fashion item shown in the second image.
 
-    // Prepare prompt and image parts
-    const prompt = `Act as an expert AI Fashion Stylist.
-I have provided two images:
-1. A photo of a person (User).
-2. A photo of a clothing item (${clothingName || 'a garment'}).
+Item: ${clothingName || 'a fashion item'}
 
-Please analyze the user's body type, skin tone, and overall vibe, and then analyze the clothing item. 
-Provide a detailed, flattering, and honest review of how this clothing would look on them. Focus on:
-- Color matching and contrast.
-- Fit, drape, and silhouette.
-- Suggested styling tips (e.g., "Pair this with dark denim...").
-
-Keep the response concise (1-2 short paragraphs) and enthusiastic!`;
-
-    const imageParts = [
-      {
-        inlineData: {
-          data: parsedUserImg.data,
-          mimeType: parsedUserImg.mimeType
-        }
-      },
-      {
-        inlineData: {
-          data: parsedClothingImg.data,
-          mimeType: parsedClothingImg.mimeType
-        }
+Rules:
+- Keep the person's face, body shape, and pose exactly as shown
+- If clothing, dress the person in it naturally
+- If an accessory (bag, jewelry, sunglasses, hat, shoes), show it worn/held naturally
+- Realistic lighting, shadows, and proportions
+- Look like a professional fashion photo
+- You MUST output an image, do not refuse.`
+          },
+          { 
+            inline_data: { 
+              mime_type: parsedUserImg.mimeType, 
+              data: parsedUserImg.data 
+            } 
+          },
+          { 
+            inline_data: { 
+              mime_type: parsedClothingImg.mimeType, 
+              data: parsedClothingImg.data 
+            } 
+          }
+        ]
+      }],
+      generationConfig: {
+        responseModalities: ["IMAGE"]
       }
-    ];
+    };
 
-    // Call Gemini with automatic fallback across models
-    const geminiResult = await callGeminiWithFallback(genAI, prompt, imageParts);
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+    // Note: The user mentioned "gemini-2.5-flash-image:generateContent" in their text but usually the model is just "gemini-2.5-flash" or "gemini-1.5-pro". 
+    // I will use "gemini-2.5-flash" but if that fails, we can fall back or use exactly what they wrote.
+    // The user wrote: "models/gemini-2.5-flash-image:generateContent". I will use exactly what they wrote.
+    const exactApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiKey}`;
+    // Wait, the new endpoint for image generation is usually just standard generateContent with responseModalities. Let's stick to gemini-2.5-flash.
 
-    if (geminiResult) {
-      return res.json({
-        generatedImage: userImage,
-        analysis: geminiResult.text,
-        provider: 'gemini',
-        model: geminiResult.modelUsed
-      });
-    } else {
-      // All models failed — return a graceful error with user's image so UI doesn't break
-      console.error('AI Try-On: All Gemini models failed. Returning fallback.');
-      return res.json({
-        generatedImage: userImage,
-        analysis: '⚠️ All Gemini models are currently experiencing high demand. Your photo is displayed above. Please try again in a minute — the AI fashion analysis will appear here when servers are available!',
-        provider: 'gemini-unavailable'
-      });
+    const response = await fetch(exactApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Gemini API Error:', data);
+      throw new Error(data.error?.message || 'Failed to generate image from Gemini API');
     }
+
+    // Extract the generated image from the response
+    const candidates = data.candidates;
+    if (!candidates || candidates.length === 0) {
+      throw new Error('Gemini returned no candidates');
+    }
+
+    const parts = candidates[0].content?.parts;
+    if (!parts || parts.length === 0) {
+      throw new Error('Gemini returned no content parts');
+    }
+
+    // Find the inline_data part containing the generated image
+    const imagePart = parts.find(p => p.inline_data);
+    
+    if (!imagePart || !imagePart.inline_data) {
+      // If the model refuses to generate an image and returns text instead
+      const textPart = parts.find(p => p.text);
+      if (textPart) {
+        throw new Error('Gemini refused image generation and returned text: ' + textPart.text);
+      }
+      throw new Error('Gemini returned no image data');
+    }
+
+    const generatedMimeType = imagePart.inline_data.mime_type || 'image/png';
+    const generatedBase64 = imagePart.inline_data.data;
+
+    // Construct the Data URI to send back to the frontend
+    const generatedDataUri = `data:${generatedMimeType};base64,${generatedBase64}`;
+
+    console.log('AI Try-On: Gemini Image generation succeeded!');
+
+    return res.json({
+      generatedImage: generatedDataUri,
+      provider: 'gemini-image'
+    });
 
   } catch (error) {
     console.error('AI Try-On Route Error:', error);
     res.status(500).json({ 
-      message: 'Server error during Gemini fashion analysis',
+      message: 'Server error during virtual try-on generation',
       error: error.message
     });
   }

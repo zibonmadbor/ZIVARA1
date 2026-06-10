@@ -6,50 +6,93 @@ import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
 
-const slides = [
+// Fallback slides if database is empty
+const defaultSlides = [
   {
-    id: 1,
+    id: "default-1",
     image: hero1,
     title: "Wear the Future",
     subtitle: "Women's Collection 2026",
     description: "Discover timeless elegance reimagined for the modern woman",
-    cta: { text: "Shop Women", href: "/products?category=women" },
+    link: "/products?category=women",
+    buttonText: "Shop Women"
   },
   {
-    id: 2,
+    id: "default-2",
     image: hero2,
     title: "Define Your Legacy",
     subtitle: "Men's Collection 2026",
     description: "Premium essentials crafted for those who lead",
-    cta: { text: "Shop Men", href: "/products?category=men" },
+    link: "/products?category=men",
+    buttonText: "Shop Men"
   },
   {
-    id: 3,
+    id: "default-3",
     image: hero3,
     title: "Future Icons",
     subtitle: "Kids' Collection 2026",
     description: "Sophisticated style for the next generation",
-    cta: { text: "Shop Kids", href: "/products?category=kids" },
+    link: "/products?category=kids",
+    buttonText: "Shop Kids"
   },
 ];
 
 export default function HeroSlider() {
+  const [slides, setSlides] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  useEffect(() => {
+    const fetchSliders = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch("/api/sliders");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            setSlides(data);
+          } else {
+            setSlides(defaultSlides);
+          }
+        } else {
+          setSlides(defaultSlides);
+        }
+      } catch (err) {
+        console.error("Failed to fetch sliders", err);
+        setSlides(defaultSlides);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSliders();
   }, []);
 
+  const nextSlide = useCallback(() => {
+    if (slides.length === 0) return;
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  }, [slides.length]);
+
   const prevSlide = () => {
+    if (slides.length === 0) return;
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || slides.length <= 1) return;
     const interval = setInterval(nextSlide, 6000);
     return () => clearInterval(interval);
-  }, [isAutoPlaying, nextSlide]);
+  }, [isAutoPlaying, nextSlide, slides.length]);
+
+  if (isLoading) {
+    return (
+      <section className="relative h-screen w-full bg-muted flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+      </section>
+    );
+  }
+
+  if (slides.length === 0) return null;
 
   return (
     <section
@@ -89,14 +132,16 @@ export default function HeroSlider() {
                 exit={{ opacity: 0, y: -30 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
               >
-                <motion.span
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="inline-block text-sm md:text-base font-medium tracking-widest text-primary uppercase mb-4"
-                >
-                  {slides[currentSlide].subtitle}
-                </motion.span>
+                {slides[currentSlide].subtitle && (
+                  <motion.span
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="inline-block text-sm md:text-base font-medium tracking-widest text-primary uppercase mb-4"
+                  >
+                    {slides[currentSlide].subtitle}
+                  </motion.span>
+                )}
                 <motion.h1
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -105,22 +150,24 @@ export default function HeroSlider() {
                 >
                   {slides[currentSlide].title}
                 </motion.h1>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-lg md:text-xl text-foreground/80 mb-8 max-w-lg"
-                >
-                  {slides[currentSlide].description}
-                </motion.p>
+                {slides[currentSlide].description && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-lg md:text-xl text-foreground/80 mb-8 max-w-lg"
+                  >
+                    {slides[currentSlide].description}
+                  </motion.p>
+                )}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                   className="flex flex-wrap gap-4"
                 >
-                  <Link to={slides[currentSlide].cta.href} className="btn-primary">
-                    {slides[currentSlide].cta.text}
+                  <Link to={slides[currentSlide].link || "/products"} className="btn-primary">
+                    {slides[currentSlide].buttonText || "Shop Now"}
                   </Link>
                   <Link to="/ai-tryon" className="btn-ai">
                     Try AI Fitting

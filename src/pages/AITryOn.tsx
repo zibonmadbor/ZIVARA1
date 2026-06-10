@@ -15,7 +15,6 @@ export default function AITryOn() {
   const [userImage, setUserImage] = useState<string | null>(null);
   const [selectedClothingId, setSelectedClothingId] = useState<string | null>(productId);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { generateTryOn, isProcessing, progress, error } = useAITryOn();
@@ -33,7 +32,6 @@ export default function AITryOn() {
       reader.onloadend = () => {
         setUserImage(reader.result as string);
         setGeneratedImage(null);
-        setAnalysis(null);
       };
       reader.readAsDataURL(file);
     }
@@ -51,9 +49,8 @@ export default function AITryOn() {
       selectedClothing.name
     );
 
-    if (result) {
-      if (result.generatedImage) setGeneratedImage(result.generatedImage);
-      if (result.analysis) setAnalysis(result.analysis);
+    if (result?.generatedImage) {
+      setGeneratedImage(result.generatedImage);
     }
   };
 
@@ -336,22 +333,6 @@ export default function AITryOn() {
                   )}
                 </AnimatePresence>
               </div>
-              
-              {analysis && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg"
-                >
-                  <h4 className="font-semibold text-primary mb-2 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    Gemini Fashion Analysis
-                  </h4>
-                  <p className="text-sm text-foreground whitespace-pre-wrap">
-                    {analysis}
-                  </p>
-                </motion.div>
-              )}
 
               {/* Actions */}
               <div className="mt-4 space-y-3">

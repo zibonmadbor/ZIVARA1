@@ -15,30 +15,34 @@ router.post('/register', protect, async (req, res) => {
       return res.status(400).json({ message: 'Full name is required' });
     }
 
-    // Check if user already exists in MongoDB
+    // Determine initial role
+    let role = 'customer';
+    if (email === 'zibonmadbor@gmail.com') {
+      role = 'super_admin';
+    }
+
+    // Upsert: create if not exists, update if exists
     let user = await User.findOne({ firebaseUid: uid });
     if (user) {
-      return res.status(400).json({ message: 'User already exists in database' });
+      // Update existing user info
+      user.fullName = fullName;
+      if (phone) user.phone = phone;
+      // Upgrade role if they're the super admin email but were created as customer
+      if (email === 'zibonmadbor@gmail.com' && user.role === 'customer') {
+        user.role = 'super_admin';
+      }
+      await user.save();
+    } else {
+      // Create new user profile in MongoDB
+      user = new User({
+        firebaseUid: uid,
+        email,
+        fullName,
+        phone: phone || '',
+        role
+      });
+      await user.save();
     }
-
-    // Determine initial role (automatic elevation for demo accounts)
-    let role = 'customer';
-    if (email === 'admin@zivara.com') {
-      role = 'super_admin';
-    } else if (email === 'moderator@zivara.com') {
-      role = 'moderator';
-    }
-
-    // Create user profile in MongoDB
-    user = new User({
-      firebaseUid: uid,
-      email,
-      fullName,
-      phone: phone || '',
-      role
-    });
-
-    await user.save();
 
     res.status(201).json({
       message: 'User profile registered successfully',
@@ -71,10 +75,8 @@ router.get('/me', protect, async (req, res) => {
     // (e.g. Google Sign-In signup, or database was reset), auto-create profile
     if (!user) {
       let role = 'customer';
-      if (email === 'admin@zivara.com') {
+      if (email === 'zibonmadbor@gmail.com') {
         role = 'super_admin';
-      } else if (email === 'moderator@zivara.com') {
-        role = 'moderator';
       }
 
       user = new User({
@@ -118,10 +120,8 @@ router.post('/login', protect, async (req, res) => {
     // Auto-create if not exists
     if (!user) {
       let role = 'customer';
-      if (email === 'admin@zivara.com') {
+      if (email === 'zibonmadbor@gmail.com') {
         role = 'super_admin';
-      } else if (email === 'moderator@zivara.com') {
-        role = 'moderator';
       }
 
       user = new User({

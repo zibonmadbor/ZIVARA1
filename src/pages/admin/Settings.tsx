@@ -1,54 +1,76 @@
-
-// ============================================================
-// ADMIN SETTINGS PAGE - Frontend Only (Mock Data)
-// ============================================================
-// TODO: Replace mock data with real API calls:
-//   GET /api/admin/settings       -> list all website settings
-//   PUT /api/admin/settings       -> update settings { key, value }[]
-//
-// MongoDB Settings Model (reference):
-//   { _id, key: String, value: Mixed, description: String }
-// ============================================================
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Settings as SettingsIcon, Save } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Settings as SettingsIcon, Save, BellRing, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// TODO: Fetch from GET /api/admin/settings
-const INITIAL_SETTINGS: Record<string, string> = {
-  site_name: "ZIVARA",
-  site_description: "Premium fashion for the modern lifestyle",
-  currency: "USD",
-  tax_rate: "8.5",
-  shipping_cost: "9.99",
-  free_shipping_threshold: "150",
-};
-
 export default function AdminSettings() {
-  const [formValues, setFormValues] = useState<Record<string, string>>(INITIAL_SETTINGS);
+  const [formValues, setFormValues] = useState({
+    storeName: "ZIVARA",
+    contactEmail: "support@zivara.com",
+    notificationActive: true,
+    notificationText: "Free shipping on all orders over $150",
+    notificationLink: "/products"
+  });
+  
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
+  const getToken = () => localStorage.getItem("zivara_token") || "";
+
+  const fetchSettings = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/settings");
+      if (!res.ok) throw new Error("Failed to fetch settings");
+      const data = await res.json();
+      
+      setFormValues({
+        storeName: data.storeName || "ZIVARA",
+        contactEmail: data.contactEmail || "support@zivara.com",
+        notificationActive: data.notificationActive !== undefined ? data.notificationActive : true,
+        notificationText: data.notificationText || "Free shipping on all orders over $150",
+        notificationLink: data.notificationLink || "/products"
+      });
+    } catch (err) {
+      toast({ title: "Error", description: "Could not load settings.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
   const handleSave = async () => {
     setIsSaving(true);
-
-    // TODO: Replace with:
-    //   const res = await fetch('/api/admin/settings', {
-    //     method: 'PUT',
-    //     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    //     body: JSON.stringify(formValues)
-    //   });
-    //   if (!res.ok) { toast error; return; }
-
-    await new Promise((r) => setTimeout(r, 800)); // simulate save
-    toast({ title: "Settings saved successfully" });
-    setIsSaving(false);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json', 
+          Authorization: `Bearer ${getToken()}` 
+        },
+        body: JSON.stringify(formValues)
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to save settings");
+      }
+      
+      toast({ title: "Settings saved successfully" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -59,61 +81,81 @@ export default function AdminSettings() {
             <h1 className="text-3xl font-display font-bold">Settings</h1>
             <p className="text-muted-foreground">Configure your website settings</p>
           </div>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={fetchSettings} disabled={isLoading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} /> Refresh
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving || isLoading}>
+              {isSaving ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Saving...</> : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
+            </Button>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* General Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5" />General Settings
-              </CardTitle>
-              <CardDescription>Basic website configuration</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="site_name">Site Name</Label>
-                <Input id="site_name" value={formValues.site_name} onChange={(e) => setFormValues({ ...formValues, site_name: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="site_description">Site Description</Label>
-                <Textarea id="site_description" value={formValues.site_description} onChange={(e) => setFormValues({ ...formValues, site_description: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="currency">Currency</Label>
-                <Input id="currency" value={formValues.currency} onChange={(e) => setFormValues({ ...formValues, currency: e.target.value })} />
-              </div>
-            </CardContent>
-          </Card>
+        {isLoading ? (
+          <div className="flex justify-center p-12">
+            <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* General Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SettingsIcon className="h-5 w-5" />General Settings
+                </CardTitle>
+                <CardDescription>Basic website configuration</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="storeName">Store Name</Label>
+                  <Input id="storeName" value={formValues.storeName} onChange={(e) => setFormValues({ ...formValues, storeName: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contactEmail">Contact Email</Label>
+                  <Input id="contactEmail" value={formValues.contactEmail} onChange={(e) => setFormValues({ ...formValues, contactEmail: e.target.value })} />
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Pricing Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5" />Pricing & Shipping
-              </CardTitle>
-              <CardDescription>Configure pricing and shipping options</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="tax_rate">Tax Rate (%)</Label>
-                <Input id="tax_rate" type="number" step="0.01" value={formValues.tax_rate} onChange={(e) => setFormValues({ ...formValues, tax_rate: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="shipping_cost">Shipping Cost ($)</Label>
-                <Input id="shipping_cost" type="number" step="0.01" value={formValues.shipping_cost} onChange={(e) => setFormValues({ ...formValues, shipping_cost: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="free_shipping_threshold">Free Shipping Threshold ($)</Label>
-                <Input id="free_shipping_threshold" type="number" step="0.01" value={formValues.free_shipping_threshold} onChange={(e) => setFormValues({ ...formValues, free_shipping_threshold: e.target.value })} />
-                <p className="text-xs text-muted-foreground">Orders above this amount get free shipping</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            {/* Top Notification Bar */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BellRing className="h-5 w-5" />Top Notification Bar
+                </CardTitle>
+                <CardDescription>Configure the announcement bar shown at the top of the website</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2 pb-4 border-b border-border">
+                  <Switch 
+                    id="notificationActive" 
+                    checked={formValues.notificationActive} 
+                    onCheckedChange={(checked) => setFormValues({ ...formValues, notificationActive: checked })} 
+                  />
+                  <Label htmlFor="notificationActive">Show Notification Bar</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notificationText">Notification Text</Label>
+                  <Input 
+                    id="notificationText" 
+                    value={formValues.notificationText} 
+                    onChange={(e) => setFormValues({ ...formValues, notificationText: e.target.value })} 
+                    disabled={!formValues.notificationActive}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notificationLink">Link (Optional)</Label>
+                  <Input 
+                    id="notificationLink" 
+                    value={formValues.notificationLink} 
+                    onChange={(e) => setFormValues({ ...formValues, notificationLink: e.target.value })} 
+                    disabled={!formValues.notificationActive}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

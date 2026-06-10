@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { products } from "@/data/products";
+// Removed hardcoded products import
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,7 +25,7 @@ export default function ProductDetail() {
   const { addItem } = useCart();
   const { toast } = useToast();
   
-  const [product, setProduct] = useState<any>(() => products.find((p) => p.id === id));
+  const [product, setProduct] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");

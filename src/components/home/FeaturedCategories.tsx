@@ -1,24 +1,29 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
 
-const categories = [
+// Fallback categories if database is empty
+const defaultCategories = [
   {
     id: "women",
+    slug: "women",
     name: "Women",
     image: hero1,
     description: "Elegance redefined",
   },
   {
     id: "men",
+    slug: "men",
     name: "Men",
     image: hero2,
     description: "Modern sophistication",
   },
   {
     id: "kids",
+    slug: "kids",
     name: "Kids",
     image: hero3,
     description: "Future icons",
@@ -45,6 +50,46 @@ const itemVariants = {
 };
 
 export default function FeaturedCategories() {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            setCategories(data);
+          } else {
+            setCategories(defaultCategories);
+          }
+        } else {
+          setCategories(defaultCategories);
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+        setCategories(defaultCategories);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <section className="section-padding bg-background">
+        <div className="container-premium text-center">
+          <div className="w-12 h-12 rounded-full border-2 border-primary/20 border-t-primary animate-spin mx-auto" />
+        </div>
+      </section>
+    );
+  }
+
+  if (categories.length === 0) return null;
+
   return (
     <section className="section-padding bg-background">
       <div className="container-premium">
@@ -74,9 +119,9 @@ export default function FeaturedCategories() {
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
           {categories.map((category) => (
-            <motion.div key={category.id} variants={itemVariants}>
+            <motion.div key={category._id || category.id} variants={itemVariants}>
               <Link
-                to={`/products?category=${category.id}`}
+                to={`/products?category=${category.slug}`}
                 className="group block relative h-[500px] md:h-[600px] overflow-hidden rounded-lg"
               >
                 <div className="absolute inset-0">
@@ -97,7 +142,9 @@ export default function FeaturedCategories() {
                     <h3 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-2">
                       {category.name}
                     </h3>
-                    <p className="text-foreground/70 mb-6">{category.description}</p>
+                    {category.description && (
+                      <p className="text-foreground/70 mb-6">{category.description}</p>
+                    )}
                     <span className="inline-block text-sm font-medium tracking-widest text-primary uppercase border-b-2 border-primary pb-1 group-hover:border-primary/50 transition-colors">
                       Explore Collection
                     </span>

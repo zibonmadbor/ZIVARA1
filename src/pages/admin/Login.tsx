@@ -31,24 +31,25 @@ export default function AdminLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, isModerator } = useAuth();
+  const { signIn } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // TODO: Replace with real API call: POST /api/auth/login
-    const { error } = await signIn(email, password);
+    const { error, user } = await signIn(email, password);
 
     if (error) {
-      toast({ title: "Error", description: error, variant: "destructive" });
+      toast({ title: "Login Failed", description: error, variant: "destructive" });
       setIsLoading(false);
       return;
     }
 
-    // TODO: After real login, decode JWT and check role field
-    // If not admin/moderator -> sign out and show error
-    if (!isModerator) {
+    // Check role from the freshly returned user (not stale context state)
+    const role = user?.role;
+    const hasAdminAccess = role === "super_admin" || role === "admin" || role === "moderator";
+
+    if (!hasAdminAccess) {
       toast({
         title: "Access Denied",
         description: "You don't have permission to access the admin panel.",
@@ -58,7 +59,7 @@ export default function AdminLogin() {
       return;
     }
 
-    toast({ title: "Welcome back!", description: "Successfully logged in to admin panel." });
+    toast({ title: "Welcome back!", description: `Logged in as ${role?.replace("_", " ")}.` });
     navigate("/admin");
     setIsLoading(false);
   };
