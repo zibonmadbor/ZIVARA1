@@ -146,9 +146,14 @@ export default function Footer() {
       {/* Bottom Footer */}
       <div className="border-t border-border">
         <div className="container-premium py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ZIVARA. All rights reserved.
-          </p>
+          <div className="flex flex-col gap-1 text-center sm:text-left">
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} ZIVARA. All rights reserved.
+            </p>
+            <p className="text-xs text-muted-foreground/60">
+              Design and developed by Jibon Madber & Hafizur Rahman | Planing Mahafuj Hossain
+            </p>
+          </div>
           <div className="flex items-center gap-6">
             {footerLinks.legal.map((link) => (
               <Link
