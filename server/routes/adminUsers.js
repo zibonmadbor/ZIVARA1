@@ -3,25 +3,21 @@ const router = express.Router();
 const User = require('../models/User');
 const { protect, adminOnly } = require('../middleware/auth');
 
-// All admin user routes require authentication + admin role
-router.use(protect);
-router.use(adminOnly);
-
 // @route   GET /api/admin/users
 // @desc    Get all users
 // @access  Admin only
-router.get('/users', async (req, res) => {
+router.get('/users', protect, adminOnly, async (req, res) => {
   try {
     const users = await User.find({}).sort({ createdAt: -1 });
     res.json({
       users: users.map(u => ({
         id: u._id,
-        firebaseUid: u.firebaseUid,
+        firebaseUid: u.firebase_uid,
         email: u.email,
-        full_name: u.fullName,
+        full_name: u.full_name,
         phone: u.phone,
         role: u.role,
-        is_blocked: u.isBlocked,
+        is_blocked: u.is_blocked,
         created_at: u.createdAt
       }))
     });
@@ -34,7 +30,7 @@ router.get('/users', async (req, res) => {
 // @route   PUT /api/admin/users/:id/role
 // @desc    Update user role
 // @access  Super Admin only
-router.put('/users/:id/role', async (req, res) => {
+router.put('/users/:id/role', protect, adminOnly, async (req, res) => {
   try {
     // Only super_admin can change roles
     if (req.user.role !== 'super_admin') {
@@ -55,7 +51,7 @@ router.put('/users/:id/role', async (req, res) => {
     }
 
     // Prevent changing your own role
-    if (user.firebaseUid === req.firebaseUser.uid) {
+    if (user.firebase_uid === req.firebaseUser.user_id) {
       return res.status(400).json({ message: 'You cannot change your own role' });
     }
 
@@ -67,7 +63,7 @@ router.put('/users/:id/role', async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
-        full_name: user.fullName,
+        full_name: user.full_name,
         role: user.role
       }
     });
@@ -80,7 +76,7 @@ router.put('/users/:id/role', async (req, res) => {
 // @route   PUT /api/admin/users/:id/block
 // @desc    Toggle block/unblock a user
 // @access  Admin only
-router.put('/users/:id/block', async (req, res) => {
+router.put('/users/:id/block', protect, adminOnly, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 
@@ -89,7 +85,7 @@ router.put('/users/:id/block', async (req, res) => {
     }
 
     // Prevent blocking yourself
-    if (user.firebaseUid === req.firebaseUser.uid) {
+    if (user.firebase_uid === req.firebaseUser.user_id) {
       return res.status(400).json({ message: 'You cannot block yourself' });
     }
 
@@ -101,12 +97,12 @@ router.put('/users/:id/block', async (req, res) => {
       return res.status(403).json({ message: 'You cannot block an admin user' });
     }
 
-    user.isBlocked = !user.isBlocked;
+    user.is_blocked = !user.is_blocked;
     await user.save();
 
     res.json({
-      message: user.isBlocked ? 'User blocked successfully' : 'User unblocked successfully',
-      is_blocked: user.isBlocked
+      message: user.is_blocked ? 'User blocked successfully' : 'User unblocked successfully',
+      is_blocked: user.is_blocked
     });
   } catch (error) {
     console.error('Admin PUT /users/:id/block error:', error);

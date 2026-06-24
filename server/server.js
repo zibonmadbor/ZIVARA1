@@ -35,6 +35,12 @@ app.use('/api', require('./routes/sliders'));
 app.use('/api', require('./routes/categories'));
 app.use('/api', require('./routes/settings'));
 app.use('/api/admin', require('./routes/adminUsers'));
+app.use('/api/admin/dashboard', require('./routes/adminDashboard'));
+app.use('/api/admin/coupons', require('./routes/coupons'));
+app.use('/api/admin/reviews', require('./routes/reviews'));
+app.use('/api/admin/notifications', require('./routes/notifications'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/coupons', require('./routes/couponsPublic'));
 
 // Global Error Handler
 app.use((err, req, res, next) => {

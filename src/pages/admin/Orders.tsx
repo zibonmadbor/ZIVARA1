@@ -1,72 +1,106 @@
-
-// ============================================================
-// ADMIN ORDERS PAGE - Frontend Only (Mock Data)
-// ============================================================
-// TODO: Replace mock data with real API calls:
-//   GET  /api/admin/orders        -> list all orders
-//   PUT  /api/admin/orders/:id    -> update order status { status }
-//
-// MongoDB Order Model (reference):
-//   { _id, order_number, customer_id, status, items[], subtotal,
-//     discount_amount, shipping_amount, tax_amount, total_amount,
-//     shipping_name, shipping_address, created_at }
-// ============================================================
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, Truck, Package, CheckCircle } from "lucide-react";
+import { Eye, Truck, Package, CheckCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "refunded";
 
+interface OrderItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  size?: string;
+  color?: string;
+  image?: string;
+}
+
 interface Order {
-  id: string;
+  _id: string;
   order_number: string;
-  customer_id: string | null;
-  status: OrderStatus;
+  customer: string | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  order_status: OrderStatus;
+  payment_method: string;
+  payment_status: string;
   subtotal: number;
-  discount_amount: number;
-  shipping_amount: number;
-  tax_amount: number;
-  total_amount: number;
-  shipping_name: string | null;
-  shipping_address: string | null;
-  shipping_city: string | null;
-  shipping_state: string | null;
-  shipping_zip: string | null;
-  shipping_country: string | null;
-  shipping_phone: string | null;
+  shipping: number;
+  total: number;
+  shipping_address: {
+    address: string;
+    city: string;
+    state?: string;
+    zip_code?: string;
+    country: string;
+  };
   notes: string | null;
-  created_at: string;
+  createdAt: string;
+  items: OrderItem[];
 }
 
 const statusOptions: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "refunded"];
 
-// TODO: Replace with data from GET /api/admin/orders
-const MOCK_ORDERS: Order[] = [
-  { id: "1", order_number: "ZIV-001", customer_id: "1", status: "delivered", subtotal: 270, discount_amount: 0, shipping_amount: 10, tax_amount: 19, total_amount: 299, shipping_name: "John Doe", shipping_address: "123 Main St", shipping_city: "New York", shipping_state: "NY", shipping_zip: "10001", shipping_country: "US", shipping_phone: "+1 555-0100", notes: null, created_at: "2024-01-15T10:00:00Z" },
-  { id: "2", order_number: "ZIV-002", customer_id: "2", status: "shipped", subtotal: 520, discount_amount: 20, shipping_amount: 15, tax_amount: 34, total_amount: 549, shipping_name: "Jane Smith", shipping_address: "456 Oak Ave", shipping_city: "Los Angeles", shipping_state: "CA", shipping_zip: "90001", shipping_country: "US", shipping_phone: "+1 555-0200", notes: "Gift wrap please", created_at: "2024-02-10T09:00:00Z" },
-  { id: "3", order_number: "ZIV-003", customer_id: "3", status: "processing", subtotal: 180, discount_amount: 0, shipping_amount: 0, tax_amount: 19, total_amount: 199, shipping_name: "Bob Wilson", shipping_address: "789 Pine Rd", shipping_city: "Chicago", shipping_state: "IL", shipping_zip: "60601", shipping_country: "US", shipping_phone: "+1 555-0300", notes: null, created_at: "2024-03-01T14:00:00Z" },
-  { id: "4", order_number: "ZIV-004", customer_id: null, status: "pending", subtotal: 850, discount_amount: 50, shipping_amount: 20, tax_amount: 79, total_amount: 899, shipping_name: "Alice Brown", shipping_address: "321 Elm St", shipping_city: "Houston", shipping_state: "TX", shipping_zip: "77001", shipping_country: "US", shipping_phone: "+1 555-0400", notes: null, created_at: "2024-03-15T11:00:00Z" },
-];
-
 export default function AdminOrders() {
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { toast } = useToast();
 
-  const updateStatus = (orderId: string, newStatus: OrderStatus) => {
-    // TODO: PUT /api/admin/orders/:id  { status: newStatus }
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
-    toast({ title: `Order status updated to ${newStatus}` });
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("zivara_token");
+      const res = await fetch("/api/orders", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.orders || []);
+      } else {
+        throw new Error("Failed to fetch orders");
+      }
+    } catch (err) {
+      toast({ title: "Error loading orders", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getStatusIcon = (status: OrderStatus) => {
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const updateStatus = async (orderId: string, newStatus: OrderStatus) => {
+    try {
+      const token = localStorage.getItem("zivara_token");
+      const res = await fetch(`/api/orders/${orderId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ order_status: newStatus })
+      });
+      if (!res.ok) throw new Error("Update failed");
+      
+      setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, order_status: newStatus } : o)));
+      toast({ title: `Order status updated to ${newStatus}` });
+      if (selectedOrder && selectedOrder._id === orderId) {
+        setSelectedOrder(prev => prev ? { ...prev, order_status: newStatus } : null);
+      }
+    } catch (err) {
+      toast({ title: "Failed to update order status", variant: "destructive" });
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case "delivered": return <CheckCircle className="h-4 w-4" />;
       case "shipped": return <Truck className="h-4 w-4" />;
@@ -74,14 +108,14 @@ export default function AdminOrders() {
     }
   };
 
-  const getStatusColor = (status: OrderStatus) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case "delivered": return "bg-primary/20 text-primary";
+      case "delivered": return "bg-green-500/20 text-green-400";
       case "shipped": return "bg-blue-500/20 text-blue-400";
       case "processing": return "bg-yellow-500/20 text-yellow-400";
-      case "confirmed": return "bg-cyan-500/20 text-cyan-400";
-      case "pending": return "bg-muted text-muted-foreground";
-      case "cancelled": case "refunded": return "bg-destructive/20 text-destructive";
+      case "confirmed": return "bg-emerald-500/20 text-emerald-400";
+      case "pending": return "bg-orange-500/20 text-orange-400";
+      case "cancelled": case "refunded": return "bg-red-500/20 text-red-400";
       default: return "bg-muted text-muted-foreground";
     }
   };
@@ -92,31 +126,31 @@ export default function AdminOrders() {
       render: (order: Order) => (
         <div>
           <p className="font-medium">{order.order_number}</p>
-          <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</p>
+          <p className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleDateString()}</p>
         </div>
       ),
     },
     {
-      key: "shipping_name", header: "Customer",
+      key: "customer_name", header: "Customer",
       render: (order: Order) => (
         <div>
-          <p className="font-medium">{order.shipping_name || "N/A"}</p>
-          <p className="text-xs text-muted-foreground">{order.shipping_city}</p>
+          <p className="font-medium">{order.customer_name || "N/A"}</p>
+          <p className="text-xs text-muted-foreground">{order.shipping_address?.city}</p>
         </div>
       ),
     },
     {
-      key: "total_amount", header: "Amount",
-      render: (order: Order) => <p className="font-semibold">${Number(order.total_amount).toFixed(2)}</p>,
+      key: "total", header: "Amount",
+      render: (order: Order) => <p className="font-semibold">${Number(order.total).toFixed(2)}</p>,
     },
     {
-      key: "status", header: "Status",
+      key: "order_status", header: "Status",
       render: (order: Order) => (
-        <Select value={order.status} onValueChange={(value) => updateStatus(order.id, value as OrderStatus)}>
+        <Select value={order.order_status} onValueChange={(value) => updateStatus(order._id, value as OrderStatus)}>
           <SelectTrigger className="w-[140px]">
-            <Badge className={getStatusColor(order.status)}>
-              {getStatusIcon(order.status)}
-              <span className="ml-1 capitalize">{order.status}</span>
+            <Badge className={getStatusColor(order.order_status)}>
+              {getStatusIcon(order.order_status)}
+              <span className="ml-1 capitalize">{order.order_status}</span>
             </Badge>
           </SelectTrigger>
           <SelectContent>
@@ -144,42 +178,108 @@ export default function AdminOrders() {
           <h1 className="text-3xl font-display font-bold">Orders</h1>
           <p className="text-muted-foreground">Manage and track customer orders</p>
         </div>
-        <DataTable columns={columns} data={orders} isLoading={false} searchPlaceholder="Search orders..." />
+        
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <DataTable columns={columns} data={orders} isLoading={false} searchPlaceholder="Search orders..." />
+        )}
+
         <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Order Details - {selectedOrder?.order_number}</DialogTitle>
             </DialogHeader>
             {selectedOrder && (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge className={getStatusColor(selectedOrder.status)}>{selectedOrder.status}</Badge>
+                    <Select value={selectedOrder.order_status} onValueChange={(value) => updateStatus(selectedOrder._id, value as OrderStatus)}>
+                      <SelectTrigger className="w-[160px] mt-1">
+                        <Badge className={getStatusColor(selectedOrder.order_status)}>
+                          {getStatusIcon(selectedOrder.order_status)}
+                          <span className="ml-1 capitalize">{selectedOrder.order_status}</span>
+                        </Badge>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((status) => (
+                          <SelectItem key={status} value={status}><span className="capitalize">{status}</span></SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Date</p>
-                    <p className="font-medium">{new Date(selectedOrder.created_at).toLocaleString()}</p>
+                    <p className="font-medium mt-1">{new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground mt-2">Payment</p>
+                    <p className="font-medium capitalize">{selectedOrder.payment_method} - {selectedOrder.payment_status}</p>
                   </div>
                 </div>
-                <div className="border-t border-border pt-4">
-                  <h4 className="font-medium mb-2">Shipping Address</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedOrder.shipping_name}<br />
-                    {selectedOrder.shipping_address}<br />
-                    {selectedOrder.shipping_city}, {selectedOrder.shipping_state} {selectedOrder.shipping_zip}<br />
-                    {selectedOrder.shipping_country}<br />
-                    {selectedOrder.shipping_phone}
-                  </p>
+                
+                <div className="grid sm:grid-cols-2 gap-4 border-t border-border pt-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Customer Info</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedOrder.customer_name}<br />
+                      {selectedOrder.customer_email}<br />
+                      {selectedOrder.customer_phone}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Shipping Address</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedOrder.shipping_address?.address}<br />
+                      {selectedOrder.shipping_address?.city}, {selectedOrder.shipping_address?.state} {selectedOrder.shipping_address?.zip_code}<br />
+                      {selectedOrder.shipping_address?.country}
+                    </p>
+                  </div>
                 </div>
+
+                {selectedOrder.notes && (
+                   <div className="border-t border-border pt-4">
+                     <h4 className="font-medium mb-1">Order Notes</h4>
+                     <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg border border-border">
+                       {selectedOrder.notes}
+                     </p>
+                   </div>
+                )}
+
                 <div className="border-t border-border pt-4">
-                  <h4 className="font-medium mb-2">Order Summary</h4>
-                  <div className="space-y-2 text-sm">
+                  <h4 className="font-medium mb-3">Order Items</h4>
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                    {selectedOrder.items?.map((item, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-12 h-16 object-cover rounded border border-border" />
+                        ) : (
+                          <div className="w-12 h-16 bg-muted rounded border border-border flex items-center justify-center">
+                            <Package className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{item.name}</p>
+                          <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
+                            {item.size && <span>Size: {item.size}</span>}
+                            {item.color && <span>Color: {item.color}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">${item.price.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-border pt-4">
+                  <div className="space-y-2 text-sm max-w-[250px] ml-auto">
                     <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${Number(selectedOrder.subtotal).toFixed(2)}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span>-${Number(selectedOrder.discount_amount).toFixed(2)}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${Number(selectedOrder.shipping_amount).toFixed(2)}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${Number(selectedOrder.tax_amount).toFixed(2)}</span></div>
-                    <div className="flex justify-between font-semibold border-t border-border pt-2"><span>Total</span><span>${Number(selectedOrder.total_amount).toFixed(2)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${Number(selectedOrder.shipping).toFixed(2)}</span></div>
+                    <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-2"><span>Total</span><span>${Number(selectedOrder.total).toFixed(2)}</span></div>
                   </div>
                 </div>
               </div>

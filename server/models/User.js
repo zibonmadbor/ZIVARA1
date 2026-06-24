@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  firebaseUid: {
+  firebase_uid: {
     type: String,
     required: true,
     unique: true,
@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
-  fullName: {
+  full_name: {
     type: String,
     required: true,
     trim: true
@@ -22,21 +22,43 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     trim: true,
-    default: ''
+    default: null
+  },
+  avatar_url: {
+    type: String,
+    default: null
+  },
+  address: {
+    type: String,
+    default: null
+  },
+  city: {
+    type: String,
+    default: null
+  },
+  state: {
+    type: String,
+    default: null
+  },
+  zip_code: {
+    type: String,
+    default: null
+  },
+  country: {
+    type: String,
+    default: null
   },
   role: {
     type: String,
     enum: ['super_admin', 'admin', 'moderator', 'customer'],
     default: 'customer'
   },
-  isBlocked: {
+  is_blocked: {
     type: Boolean,
     default: false
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('User', userSchema);

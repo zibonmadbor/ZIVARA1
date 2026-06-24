@@ -75,7 +75,7 @@ export default function Register() {
       return;
     }
 
-    toast({ title: "Welcome to ZIVARA!", description: "Your account has been created successfully." });
+    toast({ title: "Welcome to ZIVARA!", description: "Your account has been created. A verification email has been sent." });
     navigate("/");
   };
 

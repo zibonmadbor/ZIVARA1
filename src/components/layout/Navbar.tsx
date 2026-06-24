@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingBag, User, Menu, X, ArrowRight } from "lucide-react";
+import { Search, ShoppingBag, User, Menu, X, ArrowRight, LogIn } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 
 const navLinks = [
   { name: "Men", href: "/products?category=men" },
@@ -21,6 +22,7 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { itemCount } = useCart();
+  const { user, signOut } = useAuth();
   
   const [settings, setSettings] = useState<any>(null);
 
@@ -139,13 +141,23 @@ export default function Navbar() {
               >
                 <Search className="w-5 h-5" />
               </button>
-              <Link
-                to="/account"
-                className="hidden sm:block p-2 text-foreground/80 hover:text-foreground transition-colors"
-                aria-label="Account"
-              >
-                <User className="w-5 h-5" />
-              </Link>
+              {user ? (
+                <Link
+                  to="/account"
+                  className="hidden sm:block p-2 text-foreground/80 hover:text-foreground transition-colors"
+                  aria-label="Account"
+                >
+                  <User className="w-5 h-5" />
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="hidden sm:flex items-center gap-1.5 px-5 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-300 hover:shadow-gold hover:scale-[1.02] shadow-sm"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Login</span>
+                </Link>
+              )}
               <Link
                 to="/cart"
                 className="relative p-2 text-foreground/80 hover:text-foreground transition-colors"
@@ -211,14 +223,38 @@ export default function Navbar() {
                     </motion.div>
                   ))}
                 </div>
-                <div className="mt-10 pt-10 border-t border-border">
-                  <Link
-                    to="/account"
-                    className="flex items-center gap-3 text-foreground/80 hover:text-foreground transition-colors"
-                  >
-                    <User className="w-5 h-5" />
-                    <span>My Account</span>
-                  </Link>
+                <div className="mt-10 pt-10 border-t border-border flex flex-col gap-4">
+                  {user ? (
+                    <>
+                      <Link
+                        to="/account"
+                        className="flex items-center gap-3 text-foreground/80 hover:text-foreground transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <User className="w-5 h-5" />
+                        <span>My Account</span>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          signOut();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 text-destructive hover:text-destructive/80 transition-colors text-left"
+                      >
+                        <LogIn className="w-5 h-5 rotate-180" />
+                        <span>Sign Out</span>
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="flex items-center gap-3 text-foreground/80 hover:text-foreground transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <LogIn className="w-5 h-5" />
+                      <span>Login</span>
+                    </Link>
+                  )}
                 </div>
               </div>
             </motion.div>

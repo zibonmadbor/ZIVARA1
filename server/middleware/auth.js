@@ -52,7 +52,7 @@ const protect = async (req, res, next) => {
           req.firebaseUser = decoded;
 
           // Find user in MongoDB
-          const user = await User.findOne({ firebaseUid: decoded.uid });
+          const user = await User.findOne({ firebase_uid: decoded.user_id });
           req.user = user; // Will be null if user registered in Firebase but not in MongoDB yet
 
           next();

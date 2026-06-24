@@ -5,6 +5,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   signInWithPopup,
+  sendEmailVerification,
   User as FirebaseUser
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
@@ -30,6 +31,7 @@ interface AuthContextType {
   signUp: (fullName: string, email: string, phone: string, password: string) => Promise<{ error?: string }>;
   signInWithGoogle: () => Promise<{ error?: string }>;
   signOut: () => void;
+  updateProfile: (fullName: string, phone: string) => Promise<{ error?: string, user?: DBUser }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -131,6 +133,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         firebaseUser = userCredential.user;
         token = await firebaseUser.getIdToken();
+        
+        // 1.b Send verification email
+        try {
+          await sendEmailVerification(firebaseUser);
+        } catch (emailErr) {
+          console.error("Failed to send verification email:", emailErr);
+          // Continue anyway, we can still register them
+        }
       } catch (fbErr: any) {
         if (fbErr.code === "auth/email-already-in-use") {
           // Firebase user exists (from a previous partial registration). Sign in instead.
@@ -210,12 +220,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateProfile = async (fullName: string, phone: string): Promise<{ error?: string, user?: DBUser }> => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem("zivara_token");
+      if (!token) throw new Error("No authorization token found");
+
+      const res = await fetch("/api/auth/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ full_name: fullName, phone })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to update profile");
+      }
+
+      const data = await res.json();
+      setUser(data.user);
+      return { user: data.user };
+    } catch (err: any) {
+      console.error("Update profile error:", err);
+      return { error: err.message || "Failed to update profile" };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const role = user?.role ?? null;
   const isAdmin = role === "super_admin" || role === "admin";
   const isModerator = role === "super_admin" || role === "admin" || role === "moderator";
 
   return (
-    <AuthContext.Provider value={{ user, role, isLoading, isAdmin, isModerator, signIn, signUp, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, role, isLoading, isAdmin, isModerator, signIn, signUp, signInWithGoogle, signOut, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

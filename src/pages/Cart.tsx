@@ -10,19 +10,48 @@ import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/useCart";
 
 export default function Cart() {
-  const { items, updateQuantity, removeItem, total, clearCart } = useCart();
+  const { items, updateQuantity, removeItem, subtotal, total, clearCart, appliedCoupon, setAppliedCoupon, discountAmount } = useCart();
   const [couponCode, setCouponCode] = useState("");
+  const [isApplying, setIsApplying] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleApplyCoupon = () => {
-    if (couponCode.trim()) {
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    
+    setIsApplying(true);
+    try {
+      const res = await fetch(`/api/coupons/validate?code=${couponCode.trim()}`);
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || "Invalid coupon code");
+      }
+
+      if (subtotal < data.coupon.min_order_amount) {
+        throw new Error(`Minimum order amount for this coupon is $${data.coupon.min_order_amount}`);
+      }
+
+      setAppliedCoupon(data.coupon);
+      setCouponCode("");
       toast({
         title: "Coupon Applied",
-        description: `Coupon "${couponCode}" has been applied to your order.`,
+        description: `Coupon "${data.coupon.code}" has been applied successfully.`,
       });
-      setCouponCode("");
+    } catch (err: any) {
+      toast({
+        title: "Coupon failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsApplying(false);
     }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    toast({ title: "Coupon removed" });
   };
 
   const handleCheckout = () => {
@@ -34,10 +63,7 @@ export default function Cart() {
       });
       return;
     }
-    toast({
-      title: "Proceeding to Checkout",
-      description: "Checkout functionality coming soon!",
-    });
+    navigate("/checkout");
   };
 
   return (
@@ -134,8 +160,16 @@ export default function Cart() {
                     <div className="space-y-4 mb-6">
                       <div className="flex justify-between text-muted-foreground">
                         <span>Subtotal</span>
-                        <span>${total.toFixed(2)}</span>
+                        <span>${subtotal.toFixed(2)}</span>
                       </div>
+                      
+                      {appliedCoupon && (
+                        <div className="flex justify-between text-emerald-500 font-medium">
+                          <span>Discount ({appliedCoupon.code})</span>
+                          <span>-${discountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+
                       <div className="flex justify-between text-muted-foreground">
                         <span>Shipping</span>
                         <span>Calculated at checkout</span>
@@ -147,15 +181,32 @@ export default function Cart() {
                     </div>
 
                     {/* Coupon */}
-                    <div className="flex gap-2 mb-6">
-                      <Input
-                        placeholder="Coupon code"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                      />
-                      <Button variant="outline" onClick={handleApplyCoupon}>
-                        Apply
-                      </Button>
+                    <div className="mb-6">
+                      {appliedCoupon ? (
+                        <div className="flex items-center justify-between p-3 border border-emerald-500/30 bg-emerald-500/10 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium text-emerald-500 flex items-center gap-2">
+                              Coupon Applied
+                            </p>
+                            <p className="text-xs text-emerald-500/80">{appliedCoupon.code}</p>
+                          </div>
+                          <Button variant="ghost" size="sm" className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleRemoveCoupon}>
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Coupon code"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                          />
+                          <Button variant="outline" onClick={handleApplyCoupon} disabled={isApplying}>
+                            {isApplying ? "Applying..." : "Apply"}
+                          </Button>
+                        </div>
+                      )}
                     </div>
 
                     <Button className="w-full" size="lg" onClick={handleCheckout}>

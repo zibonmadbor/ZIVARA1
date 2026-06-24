@@ -11,17 +11,29 @@ export interface CartItem {
   color?: string;
 }
 
+export interface AppliedCoupon {
+  code: string;
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  min_order_amount: number;
+}
+
 interface CartContextType {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "id" | "quantity">, quantity?: number) => void;
   updateQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
+  subtotal: number;
   total: number;
   itemCount: number;
+  appliedCoupon: AppliedCoupon | null;
+  setAppliedCoupon: (coupon: AppliedCoupon | null) => void;
+  discountAmount: number;
 }
 
 const CART_STORAGE_KEY = "zivara_cart";
+const COUPON_STORAGE_KEY = "zivara_coupon";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -35,18 +47,37 @@ function getStoredCart(): CartItem[] {
   }
 }
 
+function getStoredCoupon(): AppliedCoupon | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(COUPON_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
 function saveCart(items: CartItem[]) {
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
 }
 
+function saveCoupon(coupon: AppliedCoupon | null) {
+  if (coupon) {
+    localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify(coupon));
+  } else {
+    localStorage.removeItem(COUPON_STORAGE_KEY);
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [appliedCoupon, setAppliedCouponState] = useState<AppliedCoupon | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load cart from localStorage on mount
+  // Load cart and coupon from localStorage on mount
   useEffect(() => {
-    const storedItems = getStoredCart();
-    setItems(storedItems);
+    setItems(getStoredCart());
+    setAppliedCouponState(getStoredCoupon());
     setIsLoaded(true);
   }, []);
 
@@ -56,6 +87,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       saveCart(items);
     }
   }, [items, isLoaded]);
+
+  const setAppliedCoupon = useCallback((coupon: AppliedCoupon | null) => {
+    setAppliedCouponState(coupon);
+    saveCoupon(coupon);
+  }, []);
 
   const addItem = useCallback((item: Omit<CartItem, "id" | "quantity">, quantity: number = 1) => {
     setItems((prev) => {
@@ -96,10 +132,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setItems([]);
-  }, []);
+    setAppliedCoupon(null);
+  }, [setAppliedCoupon]);
 
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Validate coupon against min_order_amount
+  useEffect(() => {
+    if (appliedCoupon && subtotal < appliedCoupon.min_order_amount) {
+      setAppliedCoupon(null);
+    }
+  }, [subtotal, appliedCoupon, setAppliedCoupon]);
+
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discount_type === "percentage") {
+      discountAmount = subtotal * (appliedCoupon.discount_value / 100);
+    } else if (appliedCoupon.discount_type === "fixed") {
+      discountAmount = Math.min(subtotal, appliedCoupon.discount_value);
+    }
+  }
+
+  const total = Math.max(0, subtotal - discountAmount);
 
   return (
     <CartContext.Provider
@@ -109,8 +164,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         removeItem,
         clearCart,
+        subtotal,
         total,
         itemCount,
+        appliedCoupon,
+        setAppliedCoupon,
+        discountAmount,
       }}
     >
       {children}
