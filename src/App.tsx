@@ -32,6 +32,11 @@ import AdminNotifications from "./pages/admin/Notifications";
 import AdminFlashSales from "./pages/admin/FlashSales";
 import AdminSettings from "./pages/admin/Settings";
 
+// Legal Pages
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import TermsOfService from "./pages/legal/TermsOfService";
+import CookiePolicy from "./pages/legal/CookiePolicy";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -53,6 +58,11 @@ const App = () => (
               <Route path="/account" element={<Account />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
+              
+              {/* Legal Routes */}
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/cookies" element={<CookiePolicy />} />
 
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
