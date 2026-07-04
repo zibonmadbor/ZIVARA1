@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Account() {
-  const { user, signOut, updateProfile } = useAuth();
+  const { user, isLoading, signOut, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,14 +41,16 @@ export default function Account() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  if (!user) {
-    navigate("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate("/login");
+    }
+  }, [isLoading, user, navigate]);
 
   // Fetch orders from API
   useEffect(() => {
     const fetchOrders = async () => {
+      if (!user) return;
       setOrdersLoading(true);
       try {
         const token = localStorage.getItem("zivara_token");
@@ -65,8 +67,23 @@ export default function Account() {
         setOrdersLoading(false);
       }
     };
-    fetchOrders();
-  }, []);
+    
+    if (user && !isLoading) {
+      fetchOrders();
+    }
+  }, [user, isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const handleEdit = () => {
     setFormData({
@@ -376,14 +393,26 @@ export default function Account() {
 /* ─── Orders List Component ─── */
 function OrdersList({ orders, ordersLoading }: { orders: any[]; ordersLoading: boolean }) {
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "delivered": return "bg-green-500/20 text-green-400";
-      case "shipped": return "bg-blue-500/20 text-blue-400";
-      case "processing": return "bg-yellow-500/20 text-yellow-400";
-      case "confirmed": return "bg-emerald-500/20 text-emerald-400";
-      case "pending": return "bg-orange-500/20 text-orange-400";
-      case "cancelled": return "bg-red-500/20 text-red-400";
+    switch (status?.toLowerCase()) {
+      case "delivered": return "bg-green-500/20 text-green-500";
+      case "shipped": return "bg-blue-500/20 text-blue-500";
+      case "processing": return "bg-yellow-500/20 text-yellow-500";
+      case "confirmed": return "bg-emerald-500/20 text-emerald-500";
+      case "pending": return "bg-orange-500/20 text-orange-500";
+      case "cancelled": return "bg-red-500/20 text-red-500";
       default: return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getStatusProgress = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "pending": return 10;
+      case "confirmed": return 25;
+      case "processing": return 50;
+      case "shipped": return 75;
+      case "delivered": return 100;
+      case "cancelled": return 100;
+      default: return 0;
     }
   };
 
@@ -414,25 +443,57 @@ function OrdersList({ orders, ordersLoading }: { orders: any[]; ordersLoading: b
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {orders.map((order: any) => (
         <div
           key={order._id}
-          className="flex items-center justify-between p-4 rounded-lg border border-border"
+          className="p-5 rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow"
         >
-          <div>
-            <p className="font-medium">{order.order_number}</p>
-            <p className="text-sm text-muted-foreground">
-              {new Date(order.createdAt).toLocaleDateString()} · {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? "s" : ""}
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div>
+              <p className="font-semibold text-lg">{order.order_number}</p>
+              <p className="text-sm text-muted-foreground">
+                Placed on {new Date(order.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+            <div className="text-left sm:text-right">
+              <p className="font-bold text-lg">${order.total?.toFixed(2)}</p>
+              <p className="text-sm text-muted-foreground">
+                {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? "s" : ""}
+              </p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="font-semibold">${order.total?.toFixed(2)}</p>
-            <span
-              className={`text-xs px-2 py-1 rounded-full capitalize ${getStatusColor(order.order_status)}`}
-            >
-              {order.order_status}
-            </span>
+          
+          {/* Status Tracker */}
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-sm font-medium">Delivery Status</p>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize ${getStatusColor(order.order_status)}`}>
+                {order.order_status}
+              </span>
+            </div>
+            
+            {order.order_status?.toLowerCase() !== "cancelled" ? (
+              <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="absolute top-0 left-0 h-full bg-primary transition-all duration-700 ease-in-out"
+                  style={{ width: `${getStatusProgress(order.order_status)}%` }}
+                />
+              </div>
+            ) : (
+              <div className="relative w-full h-2 bg-red-500/20 rounded-full overflow-hidden">
+                <div className="absolute top-0 left-0 h-full w-full bg-red-500" />
+              </div>
+            )}
+            
+            {order.order_status?.toLowerCase() !== "cancelled" && (
+              <div className="flex justify-between text-[10px] sm:text-xs text-muted-foreground mt-2 font-medium px-1">
+                <span className={getStatusProgress(order.order_status) >= 25 ? "text-primary" : ""}>Confirmed</span>
+                <span className={getStatusProgress(order.order_status) >= 50 ? "text-primary" : ""}>Processing</span>
+                <span className={getStatusProgress(order.order_status) >= 75 ? "text-primary" : ""}>Shipped</span>
+                <span className={getStatusProgress(order.order_status) >= 100 ? "text-primary" : ""}>Delivered</span>
+              </div>
+            )}
           </div>
         </div>
       ))}
