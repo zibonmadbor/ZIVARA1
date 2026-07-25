@@ -21,7 +21,7 @@
 
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import { imageToBase64, compositeTryOn } from "@/lib/imageUtils";
+import { imageToBase64 } from "@/lib/imageUtils";
 
 interface TryOnResult {
   generatedImage: string;
@@ -55,16 +55,15 @@ export function useAITryOn() {
       return null;
     }
 
-    // Simulate progress for UX
+    // Progress animation for UX
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 90) return prev;
-        return prev + Math.random() * 15;
+        return prev + Math.random() * 12;
       });
-    }, 500);
+    }, 600);
 
     try {
-      // Make the actual call to our backend API:
       const response = await fetch("/api/ai/tryon", {
         method: "POST",
         headers: {
@@ -77,36 +76,21 @@ export function useAITryOn() {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || data.error || "Failed to generate try-on");
+        throw new Error(data.message || data.error || "Gemini AI generation failed");
       }
 
       setProgress(100);
       
-      let finalOutputImage = data.generatedImage;
-
-      if (data.provider === "fallback-simulator") {
-        try {
-          // Overlay/fit the chosen outfit onto the user's photo using Canvas Compositor
-          finalOutputImage = await compositeTryOn(userImage, clothingBase64 || clothingImage);
-        } catch (cErr) {
-          console.warn("Canvas compositor fallback error:", cErr);
-        }
-        toast({
-          title: "Outfit Fitted! ✨",
-          description: `The outfit "${clothingName}" has been fitted onto your photo!`,
-        });
-      } else {
-        toast({
-          title: "AI Generation Success! ✨",
-          description: "AI Virtual try-on generated successfully!",
-        });
-      }
+      toast({
+        title: "AI Generation Success! ✨",
+        description: `Gemini 2.5 Flash Image generated outfit preview for "${clothingName}"!`,
+      });
 
       clearInterval(progressInterval);
       setIsProcessing(false);
 
       return {
-        generatedImage: finalOutputImage,
+        generatedImage: data.generatedImage,
         message: data.message
       };
 
@@ -122,3 +106,4 @@ export function useAITryOn() {
 
   return { generateTryOn, isProcessing, progress, error };
 }
+

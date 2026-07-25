@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-// We'll use native fetch API available in modern Node.js
 
 // Helper to extract clean base64 data and mime type from Data URI
 function parseDataURI(dataUri) {
@@ -28,17 +27,12 @@ router.post('/ai/tryon', async (req, res) => {
     const geminiKey = process.env.GEMINI_API_KEY;
 
     if (!geminiKey) {
-      // Fallback Simulator if no key is provided
-      console.log('AI Try-On: [FALLBACK MODE] Simulating processing...');
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      return res.json({
-        generatedImage: userImage, // Mock returning the same image
-        message: 'Mock simulation success! Provide GEMINI_API_KEY in .env for real AI VTON generation.',
-        provider: 'fallback-simulator'
+      return res.status(400).json({
+        message: 'GEMINI_API_KEY is missing in server/.env. Please configure your API key from https://aistudio.google.com/app/apikey'
       });
     }
 
-    console.log('AI Try-On: Launching Gemini 2.5 Flash Image generation...');
+    console.log('AI Try-On: Executing Gemini 2.5 Flash Image generation pipeline...');
 
     // Extract clean base64 and mime_type
     const parsedUserImg = parseDataURI(userImage);
@@ -48,23 +42,19 @@ router.post('/ai/tryon', async (req, res) => {
       return res.status(400).json({ message: 'Images must be valid base64 Data URIs' });
     }
 
-    // Exact JSON payload schema requested by the user
+    // Gemini 2.5 Flash Image VTON prompt payload
     const requestBody = {
       contents: [{
         role: "user",
         parts: [
           { 
-            text: `You are an AI fashion stylist. Create a realistic image where the person in the first image is styled with the fashion item shown in the second image.
+            text: `Virtual Try-On Task: You are an expert AI fashion generator. Take the person from Image 1 and generate a new photorealistic image where they are wearing the exact outfit/garment shown in Image 2 (${clothingName || 'selected outfit'}).
 
-Item: ${clothingName || 'a fashion item'}
-
-Rules:
-- Keep the person's face, body shape, and pose exactly as shown
-- If clothing, dress the person in it naturally
-- If an accessory (bag, jewelry, sunglasses, hat, shoes), show it worn/held naturally
-- Realistic lighting, shadows, and proportions
-- Look like a professional fashion photo
-- You MUST output an image, do not refuse.`
+Requirements:
+- Preserve the person's face, body proportions, pose, and background from Image 1.
+- Replace their current outfit with the garment shown in Image 2.
+- Realistic fabric texture, lighting, and natural fit.
+- You MUST output a generated image.`
           },
           { 
             inline_data: { 
@@ -85,78 +75,56 @@ Rules:
       }
     };
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
-    // Note: The user mentioned "gemini-2.5-flash-image:generateContent" in their text but usually the model is just "gemini-2.5-flash" or "gemini-1.5-pro". 
-    // I will use "gemini-2.5-flash" but if that fails, we can fall back or use exactly what they wrote.
-    // The user wrote: "models/gemini-2.5-flash-image:generateContent". I will use exactly what they wrote.
-    const exactApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiKey}`;
-    // Wait, the new endpoint for image generation is usually just standard generateContent with responseModalities. Let's stick to gemini-2.5-flash.
+    const modelsToTry = [
+      "gemini-2.5-flash-image",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-3.1-flash-image"
+    ];
 
-    let response;
-    try {
-      response = await fetch(exactApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-    } catch (fetchErr) {
-      console.warn('Gemini API fetch error, falling back to simulator:', fetchErr.message);
-      return res.json({
-        generatedImage: userImage,
-        message: 'Network issue contacting Gemini API. Fallback simulator returned.',
-        provider: 'fallback-simulator'
-      });
-    }
+    let lastError = null;
 
-    const data = await response.json();
+    for (const modelName of modelsToTry) {
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`;
+      try {
+        console.log(`Attempting Gemini model: ${modelName}`);
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
 
-    if (!response.ok) {
-      console.error('Gemini API Error:', data);
-      // If quota exceeded or error occurred, gracefully fallback to simulator
-      return res.json({
-        generatedImage: userImage,
-        message: `Gemini API response: ${data.error?.message || 'Quota or model error'}. Falling back to simulation mode.`,
-        provider: 'fallback-simulator'
-      });
-    }
+        const data = await response.json();
 
+        if (response.ok && data.candidates && data.candidates.length > 0) {
+          const parts = data.candidates[0].content?.parts;
+          const imagePart = parts?.find(p => p.inline_data);
+          
+          if (imagePart && imagePart.inline_data) {
+            const generatedMimeType = imagePart.inline_data.mime_type || 'image/png';
+            const generatedBase64 = imagePart.inline_data.data;
+            const generatedDataUri = `data:${generatedMimeType};base64,${generatedBase64}`;
 
-    // Extract the generated image from the response
-    const candidates = data.candidates;
-    if (!candidates || candidates.length === 0) {
-      throw new Error('Gemini returned no candidates');
-    }
-
-    const parts = candidates[0].content?.parts;
-    if (!parts || parts.length === 0) {
-      throw new Error('Gemini returned no content parts');
-    }
-
-    // Find the inline_data part containing the generated image
-    const imagePart = parts.find(p => p.inline_data);
-    
-    if (!imagePart || !imagePart.inline_data) {
-      // If the model refuses to generate an image and returns text instead
-      const textPart = parts.find(p => p.text);
-      if (textPart) {
-        throw new Error('Gemini refused image generation and returned text: ' + textPart.text);
+            console.log(`AI Try-On: Successfully generated image with ${modelName}`);
+            return res.json({
+              generatedImage: generatedDataUri,
+              provider: modelName
+            });
+          }
+        } else {
+          lastError = data.error?.message || `Model ${modelName} returned status ${response.status}`;
+          console.warn(`Model ${modelName} failed:`, lastError);
+        }
+      } catch (err) {
+        lastError = err.message;
+        console.warn(`Error connecting to model ${modelName}:`, err.message);
       }
-      throw new Error('Gemini returned no image data');
     }
 
-    const generatedMimeType = imagePart.inline_data.mime_type || 'image/png';
-    const generatedBase64 = imagePart.inline_data.data;
-
-    // Construct the Data URI to send back to the frontend
-    const generatedDataUri = `data:${generatedMimeType};base64,${generatedBase64}`;
-
-    console.log('AI Try-On: Gemini Image generation succeeded!');
-
-    return res.json({
-      generatedImage: generatedDataUri,
-      provider: 'gemini-image'
+    // If all Gemini models fail or key hits quota limit:
+    return res.status(400).json({
+      message: `Gemini API Error: ${lastError || 'Quota limit reached'}. Please ensure your API key has active quota from https://aistudio.google.com/app/apikey`,
+      error: lastError
     });
 
   } catch (error) {
@@ -169,3 +137,4 @@ Rules:
 });
 
 module.exports = router;
+
