@@ -1,9 +1,9 @@
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import HeroSlider from "@/components/home/HeroSlider";
 import FeaturedCategories from "@/components/home/FeaturedCategories";
 import ProductGrid from "@/components/home/ProductGrid";
 import AITryOnPromo from "@/components/home/AITryOnPromo";
+import AITryOnScrollCanvas from "@/components/home/AITryOnScrollCanvas";
 import CustomerReviews from "@/components/home/CustomerReviews";
 import Newsletter from "@/components/home/Newsletter";
 
@@ -11,7 +11,8 @@ const Index = () => {
   return (
     <main className="min-h-screen">
       <Navbar />
-      <HeroSlider />
+      {/* 3D Interactive AI Try-On Hero Scroll Banner */}
+      <AITryOnScrollCanvas />
       <FeaturedCategories />
       <ProductGrid
         title="Trending Now"

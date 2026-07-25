@@ -42,11 +42,25 @@ export default function Navbar() {
     fetchSettings();
   }, []);
 
+  const [isInsideCanvasSection, setIsInsideCanvasSection] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 50);
+
+      const canvasElem = document.getElementById("ai-tryon-hero-canvas");
+      if (canvasElem) {
+        const rect = canvasElem.getBoundingClientRect();
+        // Keep navbar transparent while inside the canvas section
+        setIsInsideCanvasSection(rect.bottom > 120);
+      } else {
+        setIsInsideCanvasSection(false);
+      }
     };
-    window.addEventListener("scroll", handleScroll);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -97,7 +111,9 @@ export default function Navbar() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         style={{ top: navbarTopOffset }}
         className={`fixed left-0 right-0 z-40 transition-all duration-500 ${
-          isScrolled
+          isInsideCanvasSection
+            ? "bg-transparent border-transparent"
+            : isScrolled
             ? "bg-background/95 backdrop-blur-md border-b border-border"
             : "bg-transparent"
         }`}

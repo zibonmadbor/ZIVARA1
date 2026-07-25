@@ -1,9 +1,10 @@
 export interface Product {
   id: string;
   name: string;
+  slug?: string;
   price: number;
   originalPrice?: number;
-  category: "men" | "women" | "kids";
+  category: "men" | "women" | "kids" | "accessories";
   subcategory: string;
   image: string;
   images: string[];
