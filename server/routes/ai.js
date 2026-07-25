@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const Replicate = require('replicate');
 
 // Helper to extract clean base64 data and mime type from Data URI
 function parseDataURI(dataUri) {
@@ -14,7 +15,7 @@ function parseDataURI(dataUri) {
 }
 
 // @route   POST /api/ai/tryon
-// @desc    Perform true Image-to-Image Virtual Try-On using Gemini 2.5 Flash Image API
+// @desc    Perform true Image-to-Image Virtual Try-On using Gemini 2.5 Flash Image or Replicate API
 // @access  Public
 router.post('/ai/tryon', async (req, res) => {
   try {
@@ -24,11 +25,46 @@ router.post('/ai/tryon', async (req, res) => {
       return res.status(400).json({ message: 'User photo and clothing image are required' });
     }
 
+    const replicateToken = process.env.REPLICATE_API_TOKEN;
     const geminiKey = process.env.GEMINI_API_KEY;
 
+    // Option 1: Use Replicate IDM-VTON model if REPLICATE_API_TOKEN is provided
+    if (replicateToken) {
+      try {
+        console.log('AI Try-On: Executing Replicate IDM-VTON model...');
+        const replicate = new Replicate({ auth: replicateToken });
+        const output = await replicate.run(
+          "cuuupid/idm-vton:c871d0b0b87d82361602e5e194655ad7923b0a7703c14d9d2078c71a80e8695b",
+          {
+            input: {
+              crop: false,
+              seed: 42,
+              steps: 30,
+              category: "upper_body",
+              garm_img: clothingImage,
+              human_img: userImage,
+              garment_des: clothingName || "outfit"
+            }
+          }
+        );
+
+        let finalUrl = Array.isArray(output) ? output[0] : output;
+        if (typeof finalUrl === 'object' && finalUrl.url) finalUrl = finalUrl.url();
+
+        console.log('AI Try-On: Replicate IDM-VTON succeeded!');
+        return res.json({
+          generatedImage: String(finalUrl),
+          provider: 'replicate-idm-vton'
+        });
+      } catch (repErr) {
+        console.warn('Replicate execution error:', repErr.message);
+      }
+    }
+
+    // Option 2: Use Gemini 2.5 Flash Image API
     if (!geminiKey) {
       return res.status(400).json({
-        message: 'GEMINI_API_KEY is missing in server/.env. Please configure your API key from https://aistudio.google.com/app/apikey'
+        message: 'GEMINI_API_KEY is missing in server/.env. Please configure a free API key from https://aistudio.google.com/app/apikey'
       });
     }
 
@@ -137,4 +173,5 @@ Requirements:
 });
 
 module.exports = router;
+
 
