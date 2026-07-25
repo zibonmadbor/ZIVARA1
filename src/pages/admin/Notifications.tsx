@@ -1,19 +1,16 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Bell, ShoppingCart, Settings, Send, Loader2, Check } from "lucide-react";
+import { Bell, ShoppingCart, Settings, Loader2, Check, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type NotificationType = "order" | "system" | "user";
 
 interface Notification {
+  id: string;
   _id: string;
   title: string;
   message: string;
@@ -32,6 +29,7 @@ const typeOptions = [
 export default function AdminNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   const fetchNotifications = async () => {
@@ -43,7 +41,11 @@ export default function AdminNotifications() {
       });
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications || []);
+        const mapped: Notification[] = (data.notifications || []).map((n: any) => ({
+          ...n,
+          id: n._id || n.id,
+        }));
+        setNotifications(mapped);
       }
     } catch (error) {
       toast({ title: "Failed to fetch notifications", variant: "destructive" });
@@ -66,7 +68,7 @@ export default function AdminNotifications() {
       });
       if (!res.ok) throw new Error("Delete failed");
       
-      setNotifications((prev) => prev.filter((n) => n._id !== id));
+      setNotifications((prev) => prev.filter((n) => n.id !== id && n._id !== id));
       toast({ title: "Notification deleted" });
     } catch (error) {
       toast({ title: "Failed to delete", variant: "destructive" });
@@ -82,8 +84,9 @@ export default function AdminNotifications() {
       });
       if (!res.ok) throw new Error("Mark read failed");
       
-      setNotifications((prev) => prev.map((n) => n._id === id ? { ...n, is_read: true } : n));
+      setNotifications((prev) => prev.map((n) => (n.id === id || n._id === id ? { ...n, is_read: true } : n)));
     } catch (error) {
+      toast({ title: "Failed to mark as read", variant: "destructive" });
       console.error(error);
     }
   };
@@ -100,6 +103,7 @@ export default function AdminNotifications() {
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       toast({ title: "All notifications marked as read" });
     } catch (error) {
+      toast({ title: "Failed to mark all as read", variant: "destructive" });
       console.error(error);
     }
   };
@@ -119,6 +123,16 @@ export default function AdminNotifications() {
     }
   };
 
+  const filteredNotifications = notifications.filter((n) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      n.title?.toLowerCase().includes(q) ||
+      n.message?.toLowerCase().includes(q) ||
+      n.type?.toLowerCase().includes(q)
+    );
+  });
+
   const columns = [
     {
       key: "notification", header: "Notification",
@@ -133,22 +147,37 @@ export default function AdminNotifications() {
               <Badge variant="default" className="bg-primary hover:bg-primary">New</Badge>
             )}
           </div>
-          <p className={`font-medium ${!notification.is_read ? 'text-primary' : ''}`}>{notification.title}</p>
+          {notification.link ? (
+            <Link to={notification.link} className={`font-medium hover:underline inline-flex items-center gap-1 ${!notification.is_read ? 'text-primary' : ''}`}>
+              {notification.title}
+              <ExternalLink className="h-3 w-3 inline text-muted-foreground" />
+            </Link>
+          ) : (
+            <p className={`font-medium ${!notification.is_read ? 'text-primary' : ''}`}>{notification.title}</p>
+          )}
           <p className="text-sm text-muted-foreground line-clamp-2">{notification.message}</p>
         </div>
       ),
     },
-    { key: "created_at", header: "Received", render: (notification: Notification) => <span className="text-sm text-muted-foreground">{new Date(notification.createdAt).toLocaleString()}</span> },
+    {
+      key: "created_at",
+      header: "Received",
+      render: (notification: Notification) => (
+        <span className="text-sm text-muted-foreground">
+          {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : "N/A"}
+        </span>
+      ),
+    },
     {
       key: "actions", header: "Actions",
       render: (notification: Notification) => (
         <div className="flex items-center gap-2">
           {!notification.is_read && (
-            <Button variant="ghost" size="sm" onClick={() => handleMarkAsRead(notification._id)} className="text-muted-foreground">
+            <Button variant="ghost" size="sm" onClick={() => handleMarkAsRead(notification.id || notification._id)} className="text-muted-foreground">
                <Check className="h-4 w-4 mr-1" /> Read
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={() => handleDelete(notification._id)} className="text-destructive hover:text-destructive">Delete</Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDelete(notification.id || notification._id)} className="text-destructive hover:text-destructive">Delete</Button>
         </div>
       ),
     },
@@ -176,9 +205,10 @@ export default function AdminNotifications() {
              <Loader2 className="h-8 w-8 animate-spin text-primary" />
            </div>
         ) : (
-           <DataTable columns={columns} data={notifications} isLoading={false} searchPlaceholder="Search notifications..." />
+           <DataTable columns={columns} data={filteredNotifications} isLoading={false} searchPlaceholder="Search notifications..." onSearch={setSearchQuery} />
         )}
       </div>
     </AdminLayout>
   );
 }
+

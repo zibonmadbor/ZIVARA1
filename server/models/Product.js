@@ -76,6 +76,8 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  suppressReservedKeysWarning: true
 });
 
 module.exports = mongoose.model('Product', productSchema);

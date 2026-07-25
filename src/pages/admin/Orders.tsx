@@ -21,6 +21,7 @@ interface OrderItem {
 }
 
 interface Order {
+  id: string;
   _id: string;
   order_number: string;
   customer: string | null;
@@ -30,15 +31,20 @@ interface Order {
   order_status: OrderStatus;
   payment_method: string;
   payment_status: string;
+  payment_details?: {
+    transaction_id?: string;
+    bkash_number?: string;
+    paid_at?: string;
+  };
   subtotal: number;
   shipping: number;
   total: number;
-  shipping_address: {
-    address: string;
-    city: string;
+  shipping_address?: {
+    address?: string;
+    city?: string;
     state?: string;
     zip_code?: string;
-    country: string;
+    country?: string;
   };
   notes: string | null;
   createdAt: string;
@@ -51,6 +57,7 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   const fetchOrders = async () => {
@@ -62,7 +69,11 @@ export default function AdminOrders() {
       });
       if (res.ok) {
         const data = await res.json();
-        setOrders(data.orders || []);
+        const mappedOrders: Order[] = (data.orders || []).map((o: any) => ({
+          ...o,
+          id: o._id || o.id,
+        }));
+        setOrders(mappedOrders);
       } else {
         throw new Error("Failed to fetch orders");
       }
@@ -90,9 +101,9 @@ export default function AdminOrders() {
       });
       if (!res.ok) throw new Error("Update failed");
       
-      setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, order_status: newStatus } : o)));
+      setOrders((prev) => prev.map((o) => (o.id === orderId || o._id === orderId ? { ...o, order_status: newStatus } : o)));
       toast({ title: `Order status updated to ${newStatus}` });
-      if (selectedOrder && selectedOrder._id === orderId) {
+      if (selectedOrder && (selectedOrder.id === orderId || selectedOrder._id === orderId)) {
         setSelectedOrder(prev => prev ? { ...prev, order_status: newStatus } : null);
       }
     } catch (err) {
@@ -120,13 +131,27 @@ export default function AdminOrders() {
     }
   };
 
+  const filteredOrders = orders.filter((order) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      order.order_number?.toLowerCase().includes(query) ||
+      order.customer_name?.toLowerCase().includes(query) ||
+      order.customer_email?.toLowerCase().includes(query) ||
+      order.shipping_address?.city?.toLowerCase().includes(query) ||
+      order.order_status?.toLowerCase().includes(query)
+    );
+  });
+
   const columns = [
     {
       key: "order_number", header: "Order",
       render: (order: Order) => (
         <div>
           <p className="font-medium">{order.order_number}</p>
-          <p className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleDateString()}</p>
+          <p className="text-xs text-muted-foreground">
+            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+          </p>
         </div>
       ),
     },
@@ -135,18 +160,18 @@ export default function AdminOrders() {
       render: (order: Order) => (
         <div>
           <p className="font-medium">{order.customer_name || "N/A"}</p>
-          <p className="text-xs text-muted-foreground">{order.shipping_address?.city}</p>
+          <p className="text-xs text-muted-foreground">{order.shipping_address?.city || ""}</p>
         </div>
       ),
     },
     {
       key: "total", header: "Amount",
-      render: (order: Order) => <p className="font-semibold">${Number(order.total).toFixed(2)}</p>,
+      render: (order: Order) => <p className="font-semibold">${Number(order.total || 0).toFixed(2)}</p>,
     },
     {
       key: "order_status", header: "Status",
       render: (order: Order) => (
-        <Select value={order.order_status} onValueChange={(value) => updateStatus(order._id, value as OrderStatus)}>
+        <Select value={order.order_status} onValueChange={(value) => updateStatus(order.id || order._id, value as OrderStatus)}>
           <SelectTrigger className="w-[140px]">
             <Badge className={getStatusColor(order.order_status)}>
               {getStatusIcon(order.order_status)}
@@ -184,7 +209,7 @@ export default function AdminOrders() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <DataTable columns={columns} data={orders} isLoading={false} searchPlaceholder="Search orders..." />
+          <DataTable columns={columns} data={filteredOrders} isLoading={false} searchPlaceholder="Search orders..." onSearch={setSearchQuery} />
         )}
 
         <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
@@ -197,7 +222,7 @@ export default function AdminOrders() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <Select value={selectedOrder.order_status} onValueChange={(value) => updateStatus(selectedOrder._id, value as OrderStatus)}>
+                    <Select value={selectedOrder.order_status} onValueChange={(value) => updateStatus(selectedOrder.id || selectedOrder._id, value as OrderStatus)}>
                       <SelectTrigger className="w-[160px] mt-1">
                         <Badge className={getStatusColor(selectedOrder.order_status)}>
                           {getStatusIcon(selectedOrder.order_status)}
@@ -213,9 +238,25 @@ export default function AdminOrders() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Date</p>
-                    <p className="font-medium mt-1">{new Date(selectedOrder.createdAt).toLocaleString()}</p>
-                    <p className="text-sm text-muted-foreground mt-2">Payment</p>
-                    <p className="font-medium capitalize">{selectedOrder.payment_method} - {selectedOrder.payment_status}</p>
+                    <p className="font-medium mt-1">
+                      {selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString() : "N/A"}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">Payment Info</p>
+                    {selectedOrder.payment_method === "bkash" ? (
+                      <div className="mt-1 space-y-0.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#E2136E] text-white">
+                          bKash ({(selectedOrder.payment_status || "").toUpperCase()})
+                        </span>
+                        {selectedOrder.payment_details?.bkash_number && (
+                          <p className="text-xs text-muted-foreground">Acc: {selectedOrder.payment_details.bkash_number}</p>
+                        )}
+                        {selectedOrder.payment_details?.transaction_id && (
+                          <p className="text-xs font-mono text-primary font-medium">TrxID: {selectedOrder.payment_details.transaction_id}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="font-medium capitalize mt-1">{selectedOrder.payment_method} - {selectedOrder.payment_status}</p>
+                    )}
                   </div>
                 </div>
                 
@@ -223,18 +264,22 @@ export default function AdminOrders() {
                   <div>
                     <h4 className="font-medium mb-2">Customer Info</h4>
                     <p className="text-sm text-muted-foreground">
-                      {selectedOrder.customer_name}<br />
-                      {selectedOrder.customer_email}<br />
-                      {selectedOrder.customer_phone}
+                      {selectedOrder.customer_name || "N/A"}<br />
+                      {selectedOrder.customer_email || "N/A"}<br />
+                      {selectedOrder.customer_phone || "N/A"}
                     </p>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Shipping Address</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedOrder.shipping_address?.address}<br />
-                      {selectedOrder.shipping_address?.city}, {selectedOrder.shipping_address?.state} {selectedOrder.shipping_address?.zip_code}<br />
-                      {selectedOrder.shipping_address?.country}
-                    </p>
+                    {selectedOrder.shipping_address ? (
+                      <p className="text-sm text-muted-foreground">
+                        {selectedOrder.shipping_address.address || ""}<br />
+                        {selectedOrder.shipping_address.city || ""}{selectedOrder.shipping_address.state ? `, ${selectedOrder.shipping_address.state}` : ""} {selectedOrder.shipping_address.zip_code || ""}<br />
+                        {selectedOrder.shipping_address.country || ""}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No address provided</p>
+                    )}
                   </div>
                 </div>
 
@@ -267,7 +312,7 @@ export default function AdminOrders() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium">${item.price.toFixed(2)}</p>
+                          <p className="text-sm font-medium">${Number(item.price || 0).toFixed(2)}</p>
                           <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                         </div>
                       </div>
@@ -277,9 +322,9 @@ export default function AdminOrders() {
 
                 <div className="border-t border-border pt-4">
                   <div className="space-y-2 text-sm max-w-[250px] ml-auto">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${Number(selectedOrder.subtotal).toFixed(2)}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${Number(selectedOrder.shipping).toFixed(2)}</span></div>
-                    <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-2"><span>Total</span><span>${Number(selectedOrder.total).toFixed(2)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${Number(selectedOrder.subtotal || 0).toFixed(2)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${Number(selectedOrder.shipping || 0).toFixed(2)}</span></div>
+                    <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-2"><span>Total</span><span>${Number(selectedOrder.total || 0).toFixed(2)}</span></div>
                   </div>
                 </div>
               </div>
@@ -290,3 +335,4 @@ export default function AdminOrders() {
     </AdminLayout>
   );
 }
+

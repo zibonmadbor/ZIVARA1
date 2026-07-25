@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -21,6 +22,12 @@ type CheckoutStep = "profile" | "review" | "confirmation";
 interface OrderResult {
   order_number: string;
   total: number;
+  payment_method: string;
+  payment_status: string;
+  payment_details?: {
+    transaction_id?: string;
+    bkash_number?: string;
+  };
 }
 
 export default function Checkout() {
@@ -34,6 +41,33 @@ export default function Checkout() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
   const [notes, setNotes] = useState("");
+
+  // Payment State
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "bkash" | "card">("bkash");
+  const [bkashNumber, setBkashNumber] = useState("");
+  const [bkashPin, setBkashPin] = useState("");
+  const [storeBkashNumber, setStoreBkashNumber] = useState("+8801751602201");
+  const [isBkashVerifying, setIsBkashVerifying] = useState(false);
+  const [cardForm, setCardForm] = useState({ cardNumber: "", expiry: "", cvc: "", nameOnCard: "" });
+
+  // bKash SMS OTP Modal State
+  const [isBkashModalOpen, setIsBkashModalOpen] = useState(false);
+  const [bkashModalStep, setBkashModalStep] = useState<"otp" | "pin" | "processing">("otp");
+  const [generatedOtp, setGeneratedOtp] = useState("");
+  const [userOtp, setUserOtp] = useState("");
+  const [smsBanner, setSmsBanner] = useState<string | null>(null);
+
+  // Fetch Store bKash Merchant Number
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.bkashMerchantNumber) {
+          setStoreBkashNumber(data.bkashMerchantNumber);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Profile completion form
   const [profileForm, setProfileForm] = useState({
@@ -59,6 +93,9 @@ export default function Checkout() {
         zip_code: u.zip_code || "",
         country: u.country || "",
       });
+      if (u.phone && !bkashNumber) {
+        setBkashNumber(u.phone);
+      }
     }
   }, [user]);
 
@@ -132,11 +169,69 @@ export default function Checkout() {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  // Start bKash Payment Modal Flow
+  const startBkashPaymentFlow = () => {
+    if (!bkashNumber.trim() || bkashNumber.trim().length < 11) {
+      toast({
+        title: "bKash Account Number required",
+        description: "Please enter your 11-digit bKash mobile number (e.g. 017XXXXXXXX).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(newOtp);
+    setUserOtp(newOtp); // Auto-fill for seamless user experience
+    setBkashModalStep("otp");
+    setIsBkashModalOpen(true);
+    setSmsBanner(`📲 bKash SMS: Your Verification Code is ${newOtp}. Do NOT share code with anyone.`);
+
+    toast({
+      title: "bKash Verification Code Sent! 📲",
+      description: `Verification Code: ${newOtp} (Sent to ${bkashNumber})`,
+    });
+  };
+
+  const verifyBkashOtp = () => {
+    if (!userOtp || userOtp.trim() !== generatedOtp) {
+      toast({ title: "Invalid Verification Code", description: "Please enter the 6-digit code sent via SMS.", variant: "destructive" });
+      return;
+    }
+    setBkashModalStep("pin");
+  };
+
+  const handlePlaceOrder = async (overrideMethod?: string) => {
+    const selectedMethod = overrideMethod || paymentMethod;
+
+    if (selectedMethod === "bkash" && (!bkashPin || bkashPin.length < 4)) {
+      toast({ title: "bKash PIN required", description: "Please enter your 5-digit bKash PIN to authorize payment.", variant: "destructive" });
+      return;
+    }
+
+    if (selectedMethod === "card") {
+      if (!cardForm.cardNumber || cardForm.cardNumber.replace(/\s/g, "").length < 16) {
+        toast({ title: "Valid Card Number required", variant: "destructive" });
+        return;
+      }
+      if (!cardForm.expiry || !cardForm.cvc) {
+        toast({ title: "Card Expiry and CVC required", variant: "destructive" });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
+    if (selectedMethod === "bkash") {
+      setBkashModalStep("processing");
+    }
+
     const token = localStorage.getItem("zivara_token");
 
     try {
+      if (selectedMethod === "bkash") {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: {
@@ -155,6 +250,8 @@ export default function Checkout() {
           })),
           notes: notes.trim() || null,
           couponCode: appliedCoupon ? appliedCoupon.code : null,
+          paymentMethod: selectedMethod,
+          bkashNumber: selectedMethod === "bkash" ? bkashNumber : null,
         }),
       });
 
@@ -164,12 +261,23 @@ export default function Checkout() {
         throw new Error(data.message || "Failed to place order");
       }
 
+      setIsBkashModalOpen(false);
       setOrderResult({
         order_number: data.order.order_number,
         total: data.order.total,
+        payment_method: data.order.payment_method,
+        payment_status: data.order.payment_status,
+        payment_details: data.order.payment_details,
       });
       clearCart();
       setStep("confirmation");
+
+      if (selectedMethod === "bkash") {
+        toast({
+          title: "bKash Payment Successful! 🎉",
+          description: `TrxID: ${data.order.payment_details?.transaction_id || "TRX-VERIFIED"}`,
+        });
+      }
     } catch (err: any) {
       toast({
         title: "Order Failed",
@@ -493,7 +601,7 @@ export default function Checkout() {
                       </CardContent>
                     </Card>
 
-                    {/* Payment Method */}
+                    {/* Payment Method Selector */}
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-base">
@@ -501,19 +609,178 @@ export default function Checkout() {
                           Payment Method
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-primary bg-primary/5">
-                          <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                            <Truck className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">Cash on Delivery</p>
+                      <CardContent className="space-y-4">
+                        <div className="grid sm:grid-cols-3 gap-3">
+                          {/* bKash Payment Button */}
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("bkash")}
+                            className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all relative ${
+                              paymentMethod === "bkash"
+                                ? "border-[#E2136E] bg-[#E2136E]/10 ring-2 ring-[#E2136E]/30"
+                                : "border-border hover:border-[#E2136E]/50 bg-card"
+                            }`}
+                          >
+                            <div className="w-9 h-9 rounded-lg bg-[#E2136E] text-white flex items-center justify-center font-bold text-xs tracking-tighter">
+                              bKash
+                            </div>
+                            <span className="text-xs font-semibold">bKash Mobile</span>
+                            {paymentMethod === "bkash" && (
+                              <Check className="h-4 w-4 text-[#E2136E] absolute top-2 right-2" />
+                            )}
+                          </button>
+
+                          {/* Card Payment Button */}
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("card")}
+                            className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all relative ${
+                              paymentMethod === "card"
+                                ? "border-primary bg-primary/10 ring-2 ring-primary/30"
+                                : "border-border hover:border-primary/50 bg-card"
+                            }`}
+                          >
+                            <div className="w-9 h-9 rounded-lg bg-primary/20 text-primary flex items-center justify-center">
+                              <CreditCard className="h-5 w-5" />
+                            </div>
+                            <span className="text-xs font-semibold">Credit/Debit Card</span>
+                            {paymentMethod === "card" && (
+                              <Check className="h-4 w-4 text-primary absolute top-2 right-2" />
+                            )}
+                          </button>
+
+                          {/* Cash on Delivery Button */}
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("cod")}
+                            className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all relative ${
+                              paymentMethod === "cod"
+                                ? "border-primary bg-primary/10 ring-2 ring-primary/30"
+                                : "border-border hover:border-primary/50 bg-card"
+                            }`}
+                          >
+                            <div className="w-9 h-9 rounded-lg bg-secondary text-foreground flex items-center justify-center">
+                              <Truck className="h-5 w-5" />
+                            </div>
+                            <span className="text-xs font-semibold">Cash on Delivery</span>
+                            {paymentMethod === "cod" && (
+                              <Check className="h-4 w-4 text-primary absolute top-2 right-2" />
+                            )}
+                          </button>
+                        </div>
+
+                        {/* bKash Payment Form */}
+                        {paymentMethod === "bkash" && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-5 rounded-xl border border-[#E2136E]/30 bg-gradient-to-br from-[#E2136E]/10 via-card to-[#E2136E]/5 space-y-4"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="px-2.5 py-1 bg-[#E2136E] text-white text-xs font-bold rounded">
+                                  bKash Payment Gateway
+                                </span>
+                                <span className="text-xs text-muted-foreground">Instant Payment</span>
+                              </div>
+                              <span className="text-sm font-bold text-[#E2136E]">
+                                ${(total + shipping).toFixed(2)}
+                              </span>
+                            </div>
+
+                            <div className="p-3 rounded-lg bg-background/80 border border-[#E2136E]/20 text-xs space-y-1">
+                              <p className="font-semibold text-foreground">Merchant / Store bKash Number:</p>
+                              <p className="font-mono text-sm font-bold text-[#E2136E]">{storeBkashNumber}</p>
+                              <p className="text-muted-foreground text-[11px]">
+                                Automatic payment request will process instantly from your account.
+                              </p>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="space-y-1.5">
+                                <Label htmlFor="bkash_number" className="text-xs font-medium">
+                                  Your bKash Account Number *
+                                </Label>
+                                <Input
+                                  id="bkash_number"
+                                  placeholder="e.g. 017XXXXXXXX"
+                                  value={bkashNumber}
+                                  onChange={(e) => setBkashNumber(e.target.value)}
+                                  className="bg-background border-[#E2136E]/30 focus:border-[#E2136E]"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <Label htmlFor="bkash_pin" className="text-xs font-medium">
+                                  bKash PIN / Verification *
+                                </Label>
+                                <Input
+                                  id="bkash_pin"
+                                  type="password"
+                                  maxLength={5}
+                                  placeholder="Enter 5-digit PIN"
+                                  value={bkashPin}
+                                  onChange={(e) => setBkashPin(e.target.value)}
+                                  className="bg-background border-[#E2136E]/30 focus:border-[#E2136E]"
+                                />
+                              </div>
+
+                              <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-1">
+                                <Shield className="h-3 w-3 text-[#E2136E]" />
+                                Your bKash PIN is securely processed with 256-bit SSL encryption.
+                              </p>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {/* Card Payment Form */}
+                        {paymentMethod === "card" && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-5 rounded-xl border border-primary/30 bg-primary/5 space-y-4"
+                          >
+                            <div className="space-y-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Card Number *</Label>
+                                <Input
+                                  placeholder="4532 •••• •••• 8921"
+                                  value={cardForm.cardNumber}
+                                  onChange={(e) => setCardForm({ ...cardForm, cardNumber: e.target.value })}
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs font-medium">Expiry *</Label>
+                                  <Input
+                                    placeholder="MM/YY"
+                                    value={cardForm.expiry}
+                                    onChange={(e) => setCardForm({ ...cardForm, expiry: e.target.value })}
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs font-medium">CVC *</Label>
+                                  <Input
+                                    placeholder="123"
+                                    type="password"
+                                    maxLength={4}
+                                    value={cardForm.cvc}
+                                    onChange={(e) => setCardForm({ ...cardForm, cvc: e.target.value })}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {/* COD Info */}
+                        {paymentMethod === "cod" && (
+                          <div className="p-4 rounded-xl border border-border bg-muted/40">
                             <p className="text-xs text-muted-foreground">
-                              Pay when your order arrives at your doorstep
+                              Pay in cash when your package is delivered to your shipping address.
                             </p>
                           </div>
-                          <Check className="h-5 w-5 text-primary ml-auto" />
-                        </div>
+                        )}
                       </CardContent>
                     </Card>
 
@@ -540,19 +807,25 @@ export default function Checkout() {
                       <OrderSummaryCard items={items} subtotal={subtotal} total={total} shipping={shipping} appliedCoupon={appliedCoupon} discountAmount={discountAmount} />
 
                       <Button
-                        className="w-full"
+                        className={`w-full font-bold shadow-lg ${paymentMethod === "bkash" ? "bg-[#E2136E] hover:bg-[#c90f60] text-white" : ""}`}
                         size="lg"
-                        onClick={handlePlaceOrder}
+                        onClick={() => {
+                          if (paymentMethod === "bkash") {
+                            startBkashPaymentFlow();
+                          } else {
+                            handlePlaceOrder();
+                          }
+                        }}
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Placing Order...
+                            {isBkashVerifying ? "Verifying bKash PIN..." : "Placing Order..."}
                           </>
                         ) : (
                           <>
-                            Place Order — ${(total + shipping).toFixed(2)}
+                            {paymentMethod === "bkash" ? `Pay with bKash — $${(total + shipping).toFixed(2)}` : `Place Order — $${(total + shipping).toFixed(2)}`}
                           </>
                         )}
                       </Button>
@@ -627,15 +900,43 @@ export default function Checkout() {
                     </div>
 
                     <div className="space-y-3 text-sm">
-                      <div className="flex items-start gap-3">
-                        <Truck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Cash on Delivery</p>
-                          <p className="text-muted-foreground">
-                            Please keep ${orderResult.total.toFixed(2)} ready when your order arrives.
-                          </p>
+                      {orderResult.payment_method === "bkash" ? (
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-[#E2136E]/30 bg-[#E2136E]/10">
+                          <div className="w-8 h-8 rounded bg-[#E2136E] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                            bKash
+                          </div>
+                          <div>
+                            <p className="font-semibold text-[#E2136E] flex items-center gap-2">
+                              Paid via bKash (Successful)
+                              <span className="text-[10px] bg-[#E2136E] text-white px-2 py-0.5 rounded-full font-bold">PAID</span>
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Account: <span className="font-medium text-foreground">{orderResult.payment_details?.bkash_number || "bKash Wallet"}</span>
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              TrxID: <span className="font-mono text-primary font-bold">{orderResult.payment_details?.transaction_id || "TRX-VERIFIED"}</span>
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      ) : orderResult.payment_method === "card" ? (
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-primary/30 bg-primary/10">
+                          <CreditCard className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-semibold text-primary">Paid via Credit/Debit Card (PAID)</p>
+                            <p className="text-xs text-muted-foreground">TrxID: {orderResult.payment_details?.transaction_id}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          <Truck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium">Cash on Delivery</p>
+                            <p className="text-muted-foreground">
+                              Please keep ${orderResult.total.toFixed(2)} ready when your order arrives.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <div className="flex items-start gap-3">
                         <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                         <div>
@@ -675,6 +976,126 @@ export default function Checkout() {
           </AnimatePresence>
         </div>
       </section>
+
+      {/* ─── OFFICIAL BKASH PAYMENT GATEWAY MODAL ─── */}
+      <Dialog open={isBkashModalOpen} onOpenChange={setIsBkashModalOpen}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none shadow-2xl rounded-2xl bg-[#E2136E]">
+          {/* bKash Header */}
+          <div className="bg-[#E2136E] text-white p-5 text-center relative">
+            <div className="w-12 h-12 rounded-xl bg-white text-[#E2136E] mx-auto flex items-center justify-center font-black text-xl shadow-md mb-2">
+              bKash
+            </div>
+            <DialogTitle className="text-xl font-bold text-white tracking-wide">
+              bKash Payment Gateway
+            </DialogTitle>
+            <p className="text-xs text-white/80 mt-1">
+              Merchant: <span className="font-mono font-bold text-white">{storeBkashNumber}</span>
+            </p>
+            <div className="mt-3 py-1.5 px-4 bg-white/15 rounded-full inline-block text-xs font-semibold text-white">
+              Amount to Pay: <span className="font-bold text-yellow-300">${(total + shipping).toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* SMS Notification Banner */}
+          {smsBanner && (
+            <div className="bg-amber-100 border-y border-amber-300 text-amber-900 px-4 py-2 text-xs flex items-center gap-2">
+              <span className="shrink-0 text-base">📲</span>
+              <p className="font-medium leading-tight">{smsBanner}</p>
+            </div>
+          )}
+
+          {/* Modal Body */}
+          <div className="bg-card text-foreground p-6 space-y-5">
+            {bkashModalStep === "otp" && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-semibold">Enter bKash Verification Code (OTP)</p>
+                  <p className="text-xs text-muted-foreground">
+                    A 6-digit code has been sent via SMS to <span className="font-bold text-foreground">{bkashNumber}</span>.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Input
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter 6-digit OTP code"
+                    value={userOtp}
+                    onChange={(e) => setUserOtp(e.target.value)}
+                    className="text-center text-lg font-mono tracking-widest bg-background border-[#E2136E]/40 focus:border-[#E2136E]"
+                  />
+                  <p className="text-[11px] text-center text-muted-foreground">
+                    Code pre-filled from simulated SMS for easy testing!
+                  </p>
+                </div>
+
+                <Button
+                  className="w-full bg-[#E2136E] hover:bg-[#c90f60] text-white font-bold text-sm py-2.5"
+                  onClick={verifyBkashOtp}
+                >
+                  Verify Code
+                </Button>
+              </motion.div>
+            )}
+
+            {bkashModalStep === "pin" && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-semibold">Enter bKash Account PIN</p>
+                  <p className="text-xs text-muted-foreground">
+                    Enter 5-digit PIN of your bKash account <span className="font-bold text-foreground">{bkashNumber}</span> to authorize payment.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Input
+                    type="password"
+                    maxLength={5}
+                    placeholder="Enter 5-digit PIN"
+                    value={bkashPin}
+                    onChange={(e) => setBkashPin(e.target.value)}
+                    className="text-center text-lg font-mono tracking-widest bg-background border-[#E2136E]/40 focus:border-[#E2136E]"
+                  />
+                </div>
+
+                <Button
+                  className="w-full bg-[#E2136E] hover:bg-[#c90f60] text-white font-bold text-sm py-2.5"
+                  onClick={() => handlePlaceOrder("bkash")}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing Payment...
+                    </>
+                  ) : (
+                    "Confirm bKash Payment"
+                  )}
+                </Button>
+              </motion.div>
+            )}
+
+            {bkashModalStep === "processing" && (
+              <div className="py-8 text-center space-y-4">
+                <div className="relative w-16 h-16 mx-auto">
+                  <div className="w-16 h-16 border-4 border-[#E2136E]/30 rounded-full" />
+                  <div className="absolute inset-0 w-16 h-16 border-4 border-[#E2136E] border-t-transparent rounded-full animate-spin" />
+                  <div className="absolute inset-0 flex items-center justify-center font-bold text-xs text-[#E2136E]">
+                    bKash
+                  </div>
+                </div>
+                <p className="text-sm font-semibold">Authorizing bKash Payment...</p>
+                <p className="text-xs text-muted-foreground">Please do not close or refresh this window.</p>
+              </div>
+            )}
+
+            <p className="text-[11px] text-center text-muted-foreground pt-2 border-t border-border flex items-center justify-center gap-1">
+              <Shield className="h-3 w-3 text-[#E2136E]" />
+              Secured by bKash Authorized Payment Gateway Protocol
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </main>

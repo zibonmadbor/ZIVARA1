@@ -19,7 +19,7 @@ function parseDataURI(dataUri) {
 // @access  Public
 router.post('/ai/tryon', async (req, res) => {
   try {
-    const { userImage, clothingImage } = req.body;
+    const { userImage, clothingImage, clothingName } = req.body;
 
     if (!userImage || !clothingImage) {
       return res.status(400).json({ message: 'User photo and clothing image are required' });
@@ -146,7 +146,7 @@ Rules:
   } catch (error) {
     console.error('AI Try-On Route Error:', error);
     res.status(500).json({ 
-      message: 'Server error during virtual try-on generation',
+      message: error.message || 'Server error during virtual try-on generation',
       error: error.message
     });
   }

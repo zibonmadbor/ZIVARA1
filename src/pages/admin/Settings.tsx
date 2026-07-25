@@ -12,6 +12,7 @@ export default function AdminSettings() {
   const [formValues, setFormValues] = useState({
     storeName: "ZIVARA",
     contactEmail: "support@zivara.com",
+    bkashMerchantNumber: "01700-000000",
     notificationActive: true,
     notificationText: "Free shipping on all orders over $150",
     notificationLink: "/products"
@@ -33,6 +34,7 @@ export default function AdminSettings() {
       setFormValues({
         storeName: data.storeName || "ZIVARA",
         contactEmail: data.contactEmail || "support@zivara.com",
+        bkashMerchantNumber: data.bkashMerchantNumber || "01700-000000",
         notificationActive: data.notificationActive !== undefined ? data.notificationActive : true,
         notificationText: data.notificationText || "Free shipping on all orders over $150",
         notificationLink: data.notificationLink || "/products"
@@ -117,8 +119,36 @@ export default function AdminSettings() {
               </CardContent>
             </Card>
 
+            {/* bKash Payment Settings */}
+            <Card className="border-[#E2136E]/30 bg-gradient-to-br from-[#E2136E]/5 to-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-[#E2136E]">
+                  <div className="w-6 h-6 rounded bg-[#E2136E] text-white flex items-center justify-center font-bold text-[10px]">
+                    bK
+                  </div>
+                  bKash Payment Gateway Settings
+                </CardTitle>
+                <CardDescription>Set your bKash Merchant or Personal Account Number for receiving payments from customers.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bkashMerchantNumber">Store bKash Merchant / Agent / Personal Number</Label>
+                  <Input
+                    id="bkashMerchantNumber"
+                    placeholder="e.g. 01712345678"
+                    value={formValues.bkashMerchantNumber}
+                    onChange={(e) => setFormValues({ ...formValues, bkashMerchantNumber: e.target.value })}
+                    className="border-[#E2136E]/30 focus:border-[#E2136E]"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This is the bKash number displayed to customers on the checkout page.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Top Notification Bar */}
-            <Card>
+            <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BellRing className="h-5 w-5" />Top Notification Bar
@@ -134,23 +164,25 @@ export default function AdminSettings() {
                   />
                   <Label htmlFor="notificationActive">Show Notification Bar</Label>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notificationText">Notification Text</Label>
-                  <Input 
-                    id="notificationText" 
-                    value={formValues.notificationText} 
-                    onChange={(e) => setFormValues({ ...formValues, notificationText: e.target.value })} 
-                    disabled={!formValues.notificationActive}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notificationLink">Link (Optional)</Label>
-                  <Input 
-                    id="notificationLink" 
-                    value={formValues.notificationLink} 
-                    onChange={(e) => setFormValues({ ...formValues, notificationLink: e.target.value })} 
-                    disabled={!formValues.notificationActive}
-                  />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="notificationText">Notification Text</Label>
+                    <Input 
+                      id="notificationText" 
+                      value={formValues.notificationText} 
+                      onChange={(e) => setFormValues({ ...formValues, notificationText: e.target.value })} 
+                      disabled={!formValues.notificationActive}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="notificationLink">Link (Optional)</Label>
+                    <Input 
+                      id="notificationLink" 
+                      value={formValues.notificationLink} 
+                      onChange={(e) => setFormValues({ ...formValues, notificationLink: e.target.value })} 
+                      disabled={!formValues.notificationActive}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>

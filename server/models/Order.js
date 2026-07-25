@@ -62,13 +62,18 @@ const orderSchema = new mongoose.Schema({
   },
   payment_method: {
     type: String,
-    enum: ['cod'],
+    enum: ['cod', 'bkash', 'card', 'nagad'],
     default: 'cod'
   },
   payment_status: {
     type: String,
     enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending'
+  },
+  payment_details: {
+    transaction_id: { type: String, default: null },
+    bkash_number: { type: String, default: null },
+    paid_at: { type: Date, default: null }
   },
   order_status: {
     type: String,

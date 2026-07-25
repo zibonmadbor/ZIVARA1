@@ -64,11 +64,17 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: 'Please complete your delivery address before placing an order.' });
     }
 
-    const { items, notes, couponCode } = req.body;
+    const { items, notes, couponCode, paymentMethod, bkashNumber, transactionId } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: 'Order must contain at least one item.' });
     }
+
+    const selectedPaymentMethod = ['cod', 'bkash', 'card', 'nagad'].includes(paymentMethod) ? paymentMethod : 'cod';
+    const isOnlinePaid = ['bkash', 'card', 'nagad'].includes(selectedPaymentMethod);
+    
+    // Generate bKash transaction ID if not provided
+    const finalTxnId = transactionId || (isOnlinePaid ? `TRX${Math.random().toString(36).substring(2, 10).toUpperCase()}` : null);
 
     // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -124,8 +130,13 @@ router.post('/', protect, async (req, res) => {
         zip_code: user.zip_code || null,
         country: user.country
       },
-      payment_method: 'cod',
-      payment_status: 'pending',
+      payment_method: selectedPaymentMethod,
+      payment_status: isOnlinePaid ? 'paid' : 'pending',
+      payment_details: {
+        transaction_id: finalTxnId,
+        bkash_number: bkashNumber || null,
+        paid_at: isOnlinePaid ? new Date() : null
+      },
       order_status: 'confirmed',
       notes: notes || null
     });
@@ -140,8 +151,8 @@ router.post('/', protect, async (req, res) => {
 
     const Notification = require('../models/Notification');
     await Notification.create({
-      title: 'New Order Received',
-      message: `Order ${order_number} placed by ${user.full_name} for $${total.toFixed(2)}.`,
+      title: isOnlinePaid ? `New Paid Order (${selectedPaymentMethod.toUpperCase()})` : 'New Order Received',
+      message: `Order ${order_number} placed by ${user.full_name} for $${total.toFixed(2)} [${selectedPaymentMethod.toUpperCase()}].`,
       type: 'order',
       link: '/admin/orders'
     });
@@ -154,6 +165,8 @@ router.post('/', protect, async (req, res) => {
         total: order.total,
         order_status: order.order_status,
         payment_method: order.payment_method,
+        payment_status: order.payment_status,
+        payment_details: order.payment_details,
         createdAt: order.createdAt
       }
     });

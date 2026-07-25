@@ -11,6 +11,12 @@ const settingsSchema = new mongoose.Schema({
     default: 'support@zivara.com'
   },
   
+  // Payment Settings
+  bkashMerchantNumber: {
+    type: String,
+    default: '+8801751602201'
+  },
+  
   // Top Notification Bar
   notificationActive: {
     type: Boolean,
