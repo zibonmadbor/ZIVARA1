@@ -277,7 +277,7 @@ export default function AITryOn() {
 
               {/* Category Filter Tabs */}
               <div className="flex gap-1 mb-3 overflow-x-auto pb-1 text-xs">
-                {["all", "men", "women", "kids"].map((cat) => (
+                {["all", "men", "women", "kids", "accessories"].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
