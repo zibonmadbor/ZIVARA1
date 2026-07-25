@@ -16,7 +16,7 @@ const sortOptions = [
   { value: "rating", label: "Top Rated" },
 ];
 
-const categoryOptions = ["all", "men", "women", "kids"];
+const categoryOptions = ["all", "men", "women", "kids", "accessories"];
 const priceRanges = [
   { value: "all", label: "All Prices" },
   { value: "0-100", label: "Under $100" },

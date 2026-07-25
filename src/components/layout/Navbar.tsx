@@ -9,6 +9,7 @@ const navLinks = [
   { name: "Men", href: "/products?category=men" },
   { name: "Women", href: "/products?category=women" },
   { name: "Kids", href: "/products?category=kids" },
+  { name: "Accessories", href: "/products?category=accessories" },
   { name: "New Arrivals", href: "/products?filter=new" },
   { name: "Sale", href: "/products?filter=sale" },
   { name: "AI Try-On", href: "/ai-tryon" },
