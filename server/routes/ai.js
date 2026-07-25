@@ -92,20 +92,36 @@ Rules:
     const exactApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiKey}`;
     // Wait, the new endpoint for image generation is usually just standard generateContent with responseModalities. Let's stick to gemini-2.5-flash.
 
-    const response = await fetch(exactApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
+    let response;
+    try {
+      response = await fetch(exactApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+    } catch (fetchErr) {
+      console.warn('Gemini API fetch error, falling back to simulator:', fetchErr.message);
+      return res.json({
+        generatedImage: userImage,
+        message: 'Network issue contacting Gemini API. Fallback simulator returned.',
+        provider: 'fallback-simulator'
+      });
+    }
 
     const data = await response.json();
 
     if (!response.ok) {
       console.error('Gemini API Error:', data);
-      throw new Error(data.error?.message || 'Failed to generate image from Gemini API');
+      // If quota exceeded or error occurred, gracefully fallback to simulator
+      return res.json({
+        generatedImage: userImage,
+        message: `Gemini API response: ${data.error?.message || 'Quota or model error'}. Falling back to simulation mode.`,
+        provider: 'fallback-simulator'
+      });
     }
+
 
     // Extract the generated image from the response
     const candidates = data.candidates;
