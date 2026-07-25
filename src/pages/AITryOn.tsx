@@ -14,15 +14,16 @@ export default function AITryOn() {
   
   const [userImage, setUserImage] = useState<string | null>(null);
   const [selectedClothingId, setSelectedClothingId] = useState<string | null>(productId);
+  const [customClothingImage, setCustomClothingImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const clothingFileInputRef = useRef<HTMLInputElement>(null);
   
   const { generateTryOn, isProcessing, progress, error } = useAITryOn();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert("Please upload an image smaller than 5MB");
         return;
@@ -37,22 +38,52 @@ export default function AITryOn() {
     }
   };
 
+  const handleCustomClothingUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Please upload an image smaller than 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCustomClothingImage(reader.result as string);
+        setSelectedClothingId(null);
+        setGeneratedImage(null);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleTryOn = async () => {
-    if (!userImage || !selectedClothingId) return;
-    
-    const selectedClothing = products.find((p) => p.id === selectedClothingId);
-    if (!selectedClothing) return;
+    if (!userImage) return;
+
+    let clothingImg = "";
+    let clothingTitle = "";
+
+    if (customClothingImage) {
+      clothingImg = customClothingImage;
+      clothingTitle = "Custom Uploaded Outfit";
+    } else if (selectedClothingId) {
+      const selectedClothing = products.find((p) => p.id === selectedClothingId);
+      if (!selectedClothing) return;
+      clothingImg = selectedClothing.image;
+      clothingTitle = selectedClothing.name;
+    } else {
+      return;
+    }
 
     const result = await generateTryOn(
       userImage,
-      selectedClothing.image,
-      selectedClothing.name
+      clothingImg,
+      clothingTitle
     );
 
     if (result?.generatedImage) {
       setGeneratedImage(result.generatedImage);
     }
   };
+
 
   const handleDownload = () => {
     if (!generatedImage) return;
@@ -211,41 +242,81 @@ export default function AITryOn() {
               transition={{ delay: 0.2 }}
               className="bg-card border border-border rounded-xl p-6"
             >
-              <div className="flex items-center gap-3 mb-6">
-                <span className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                  2
-                </span>
-                <h3 className="font-semibold text-foreground">Select Clothing</h3>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                    2
+                  </span>
+                  <h3 className="font-semibold text-foreground">Select Outfit</h3>
+                </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto">
-                {products.map((product) => (
+
+              <input
+                ref={clothingFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleCustomClothingUpload}
+                className="hidden"
+              />
+
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => clothingFileInputRef.current?.click()}
+                  className="w-full py-2 px-3 border border-dashed border-primary/50 hover:border-primary rounded-lg text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  {customClothingImage ? "Change Custom Outfit Image" : "Upload Custom Outfit Image"}
+                </button>
+              </div>
+
+              {customClothingImage ? (
+                <div className="relative mb-4">
+                  <img
+                    src={customClothingImage}
+                    alt="Custom clothing"
+                    className="w-full aspect-square object-cover rounded-lg border-2 border-primary"
+                  />
                   <button
-                    key={product.id}
-                    onClick={() => setSelectedClothingId(product.id)}
-                    className={`relative rounded-lg overflow-hidden transition-all ${
-                      selectedClothingId === product.id
-                        ? "ring-2 ring-primary scale-[1.02]"
-                        : "hover:ring-1 hover:ring-border"
-                    }`}
+                    onClick={() => setCustomClothingImage(null)}
+                    className="absolute top-2 right-2 p-1.5 bg-background/80 backdrop-blur-sm rounded-full hover:bg-destructive hover:text-destructive-foreground transition-colors"
                   >
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full aspect-square object-cover"
-                    />
-                    {selectedClothingId === product.id && (
-                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                        <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                          <Sparkles className="w-4 h-4 text-primary-foreground" />
-                        </span>
-                      </div>
-                    )}
+                    <X className="w-3.5 h-3.5" />
                   </button>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 max-h-[340px] overflow-y-auto pr-1">
+                  {products.map((product) => (
+                    <button
+                      key={product.id}
+                      onClick={() => {
+                        setSelectedClothingId(product.id);
+                        setCustomClothingImage(null);
+                      }}
+                      className={`relative rounded-lg overflow-hidden transition-all ${
+                        selectedClothingId === product.id
+                          ? "ring-2 ring-primary scale-[1.02]"
+                          : "hover:ring-1 hover:ring-border"
+                      }`}
+                    >
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full aspect-square object-cover"
+                      />
+                      {selectedClothingId === product.id && (
+                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                          <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-primary-foreground" />
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
               
-              {selectedClothing && (
+              {selectedClothing && !customClothingImage && (
                 <div className="mt-4 p-3 bg-secondary rounded-lg">
                   <p className="text-sm font-medium text-foreground">
                     {selectedClothing.name}
@@ -253,7 +324,13 @@ export default function AITryOn() {
                   <p className="text-sm text-primary">${selectedClothing.price}</p>
                 </div>
               )}
+              {customClothingImage && (
+                <div className="mt-4 p-3 bg-secondary rounded-lg">
+                  <p className="text-sm font-medium text-foreground">Custom Uploaded Outfit</p>
+                </div>
+              )}
             </motion.div>
+
 
             {/* Step 3: Result */}
             <motion.div
@@ -338,7 +415,7 @@ export default function AITryOn() {
               <div className="mt-4 space-y-3">
                 <button
                   onClick={handleTryOn}
-                  disabled={!userImage || !selectedClothingId || isProcessing}
+                  disabled={!userImage || (!selectedClothingId && !customClothingImage) || isProcessing}
                   className="w-full btn-ai flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Sparkles className="w-5 h-5" />

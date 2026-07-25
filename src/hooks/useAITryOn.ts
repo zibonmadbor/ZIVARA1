@@ -85,7 +85,7 @@ export function useAITryOn() {
       if (data.provider === "fallback-simulator") {
         toast({
           title: "Simulator Result",
-          description: "Virtual try-on simulated successfully! Provide REPLICATE_API_TOKEN in .env for real AI.",
+          description: "Virtual try-on simulated successfully! Configure GEMINI_API_KEY in .env for live AI generation.",
         });
       } else {
         toast({
