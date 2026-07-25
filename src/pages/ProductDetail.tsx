@@ -33,6 +33,7 @@ export default function ProductDetail() {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchProductDetail = async () => {
       if (!id) return;
       try {

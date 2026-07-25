@@ -37,6 +37,8 @@ import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import TermsOfService from "./pages/legal/TermsOfService";
 import CookiePolicy from "./pages/legal/CookiePolicy";
 
+import ScrollToTop from "@/components/layout/ScrollToTop";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -47,6 +49,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <Routes>
               {/* Customer Routes */}
               <Route path="/" element={<Index />} />

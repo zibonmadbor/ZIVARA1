@@ -271,13 +271,13 @@ export default function Account() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="city">City</Label>
-                            <Input id="city" placeholder="New York"
+                            <Input id="city" placeholder="Dhaka"
                               value={addressData.city}
                               onChange={(e) => setAddressData({ ...addressData, city: e.target.value })} />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="state">State / Province</Label>
-                            <Input id="state" placeholder="NY"
+                            <Label htmlFor="state">District / Division</Label>
+                            <Input id="state" placeholder="Dhaka Division"
                               value={addressData.state}
                               onChange={(e) => setAddressData({ ...addressData, state: e.target.value })} />
                           </div>
@@ -285,13 +285,13 @@ export default function Account() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="zip_code">ZIP / Postal Code</Label>
-                            <Input id="zip_code" placeholder="10001"
+                            <Input id="zip_code" placeholder="1212"
                               value={addressData.zip_code}
                               onChange={(e) => setAddressData({ ...addressData, zip_code: e.target.value })} />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="country">Country</Label>
-                            <Input id="country" placeholder="United States"
+                            <Input id="country" placeholder="Bangladesh"
                               value={addressData.country}
                               onChange={(e) => setAddressData({ ...addressData, country: e.target.value })} />
                           </div>

@@ -7,6 +7,7 @@ const footerLinks = {
     { name: "Men", href: "/products?category=men" },
     { name: "Women", href: "/products?category=women" },
     { name: "Kids", href: "/products?category=kids" },
+    { name: "Accessories", href: "/products?category=accessories" },
     { name: "New Arrivals", href: "/products?filter=new" },
     { name: "Sale", href: "/products?filter=sale" },
   ],
@@ -73,15 +74,15 @@ export default function Footer() {
             <div className="mt-8 space-y-3 text-sm text-muted-foreground">
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4" />
-                <span>hello@zivara.com</span>
+                <span>support@zivara.com.bd</span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4" />
-                <span>+1 (555) 123-4567</span>
+                <span>+880 1700-000000</span>
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-4 h-4" />
-                <span>New York, NY 10001</span>
+                <span>Gulshan-2, Dhaka 1212, Bangladesh</span>
               </div>
             </div>
           </div>
