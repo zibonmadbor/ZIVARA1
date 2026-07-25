@@ -1,10 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Sparkles, Camera, X, Download, Share2, ArrowRight, AlertCircle } from "lucide-react";
+import { Upload, Sparkles, Camera, X, Download, Share2, ArrowRight, AlertCircle, Search } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { products } from "@/data/products";
+import { products as staticProducts, Product } from "@/data/products";
 import { useAITryOn } from "@/hooks/useAITryOn";
 import { Progress } from "@/components/ui/progress";
 
@@ -13,11 +13,51 @@ export default function AITryOn() {
   const productId = searchParams.get("product");
   
   const [userImage, setUserImage] = useState<string | null>(null);
+  const [allProducts, setAllProducts] = useState<Product[]>(staticProducts);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [productSearch, setProductSearch] = useState<string>("");
   const [selectedClothingId, setSelectedClothingId] = useState<string | null>(productId);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { generateTryOn, isProcessing, progress, error } = useAITryOn();
+
+  useEffect(() => {
+    const fetchApiProducts = async () => {
+      try {
+        const res = await fetch("/api/products");
+        if (res.ok) {
+          const data = await res.json();
+          const apiProducts: Product[] = (data || []).map((p: any) => ({
+            id: p._id || p.id,
+            name: p.name,
+            price: p.price,
+            category: p.category,
+            subcategory: p.subcategory || "",
+            image: p.image,
+            images: p.images || [p.image],
+            colors: p.colors || [],
+            sizes: p.sizes || [],
+            description: p.description || "",
+            rating: p.rating || 5,
+            reviews: p.reviews || 0
+          }));
+          
+          const merged = [...apiProducts];
+          for (const sp of staticProducts) {
+            if (!merged.some(mp => mp.id === sp.id || mp.name === sp.name)) {
+              merged.push(sp);
+            }
+          }
+          setAllProducts(merged);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch backend products, using catalog:", err);
+      }
+    };
+
+    fetchApiProducts();
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -39,7 +79,7 @@ export default function AITryOn() {
   const handleTryOn = async () => {
     if (!userImage || !selectedClothingId) return;
 
-    const selectedClothing = products.find((p) => p.id === selectedClothingId);
+    const selectedClothing = allProducts.find((p) => p.id === selectedClothingId);
     if (!selectedClothing) return;
 
     const result = await generateTryOn(
@@ -53,7 +93,13 @@ export default function AITryOn() {
     }
   };
 
+  const selectedClothing = allProducts.find((p) => p.id === selectedClothingId);
 
+  const filteredProducts = allProducts.filter((product) => {
+    const matchesCategory = selectedCategory === "all" || product.category?.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesSearch = !productSearch.trim() || product.name.toLowerCase().includes(productSearch.toLowerCase()) || product.subcategory?.toLowerCase().includes(productSearch.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const handleDownload = () => {
     if (!generatedImage) return;
@@ -71,7 +117,6 @@ export default function AITryOn() {
     
     if (navigator.share) {
       try {
-        // Convert base64 to blob for sharing
         const response = await fetch(generatedImage);
         const blob = await response.blob();
         const file = new File([blob], "zivara-tryon.png", { type: "image/png" });
@@ -82,7 +127,6 @@ export default function AITryOn() {
           files: [file],
         });
       } catch (err) {
-        // Fallback: copy image URL
         navigator.clipboard.writeText(window.location.href);
         alert("Link copied to clipboard!");
       }
@@ -91,8 +135,6 @@ export default function AITryOn() {
       alert("Link copied to clipboard!");
     }
   };
-
-  const selectedClothing = products.find((p) => p.id === selectedClothingId);
 
   return (
     <main className="min-h-screen">
@@ -212,46 +254,89 @@ export default function AITryOn() {
               transition={{ delay: 0.2 }}
               className="bg-card border border-border rounded-xl p-6"
             >
-              <div className="flex items-center gap-3 mb-6">
-                <span className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                  2
-                </span>
-                <h3 className="font-semibold text-foreground">Select Clothing</h3>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                    2
+                  </span>
+                  <h3 className="font-semibold text-foreground">Select Product ({allProducts.length})</h3>
+                </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-3 max-h-[380px] overflow-y-auto pr-1">
-                {products.map((product) => (
+
+              {/* Product Search */}
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search website products..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              {/* Category Filter Tabs */}
+              <div className="flex gap-1 mb-3 overflow-x-auto pb-1 text-xs">
+                {["all", "men", "women", "kids"].map((cat) => (
                   <button
-                    key={product.id}
-                    onClick={() => setSelectedClothingId(product.id)}
-                    className={`relative rounded-lg overflow-hidden transition-all ${
-                      selectedClothingId === product.id
-                        ? "ring-2 ring-primary scale-[1.02]"
-                        : "hover:ring-1 hover:ring-border"
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-2.5 py-1 rounded-md capitalize transition-colors whitespace-nowrap ${
+                      selectedCategory === cat
+                        ? "bg-primary text-primary-foreground font-medium"
+                        : "bg-muted text-muted-foreground hover:bg-secondary"
                     }`}
                   >
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full aspect-square object-cover"
-                    />
-                    {selectedClothingId === product.id && (
-                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                        <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                          <Sparkles className="w-4 h-4 text-primary-foreground" />
-                        </span>
-                      </div>
-                    )}
+                    {cat}
                   </button>
                 ))}
               </div>
               
-              {selectedClothing && (
-                <div className="mt-4 p-3 bg-secondary rounded-lg">
-                  <p className="text-sm font-medium text-foreground">
-                    {selectedClothing.name}
+              <div className="grid grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-1">
+                {filteredProducts.length === 0 ? (
+                  <p className="col-span-2 text-xs text-center text-muted-foreground py-8">
+                    No products match your search.
                   </p>
-                  <p className="text-sm text-primary">${selectedClothing.price}</p>
+                ) : (
+                  filteredProducts.map((product) => (
+                    <button
+                      key={product.id}
+                      onClick={() => setSelectedClothingId(product.id)}
+                      className={`relative rounded-lg overflow-hidden transition-all text-left ${
+                        selectedClothingId === product.id
+                          ? "ring-2 ring-primary scale-[1.02]"
+                          : "hover:ring-1 hover:ring-border"
+                      }`}
+                    >
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full aspect-square object-cover"
+                      />
+                      {selectedClothingId === product.id && (
+                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                          <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-primary-foreground" />
+                          </span>
+                        </div>
+                      )}
+                      <div className="p-1.5 bg-card/90 text-[11px] truncate font-medium">
+                        {product.name}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+              
+              {selectedClothing && (
+                <div className="mt-4 p-3 bg-secondary rounded-lg flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-foreground truncate max-w-[180px]">
+                      {selectedClothing.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground capitalize">{selectedClothing.category}</p>
+                  </div>
+                  <p className="text-sm font-bold text-primary">${selectedClothing.price}</p>
                 </div>
               )}
             </motion.div>
