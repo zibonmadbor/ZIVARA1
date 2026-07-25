@@ -76,9 +76,9 @@ Requirements:
     };
 
     const modelsToTry = [
-      "gemini-2.5-flash-image",
-      "gemini-2.5-flash",
+      "gemini-2.0-flash-lite",
       "gemini-2.0-flash",
+      "gemini-2.5-flash-image",
       "gemini-3.1-flash-image"
     ];
 
