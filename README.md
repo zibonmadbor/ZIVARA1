@@ -4,6 +4,12 @@
   <p><strong>A Luxury AI-Powered Fashion E-Commerce Platform with Interactive 3D Fitting Canvas & Real-Time AI Virtual Try-On</strong></p>
 
   <p>
+    <a href="https://zivaraicloth.netlify.app/" target="_blank">
+      <img src="https://img.shields.io/badge/🌐_Live_Demo-zivaraicloth.netlify.app-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" alt="Live Demo" />
+    </a>
+  </p>
+
+  <p>
     <img src="https://img.shields.io/badge/React-18.3-61DAFB.svg?style=for-the-badge&logo=react&logoColor=black" alt="React 18" />
     <img src="https://img.shields.io/badge/TypeScript-5.5-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
     <img src="https://img.shields.io/badge/Vite-5.4-646CFF.svg?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
@@ -15,11 +21,20 @@
 
   <br />
 
-  <img src="src/assets/ai-tryon-promo.jpg" alt="ZIVARA AI Virtual Try-On Showcase" width="90%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);" />
+  <a href="https://zivaraicloth.netlify.app/" target="_blank">
+    <img src="src/assets/ai-tryon-promo.jpg" alt="ZIVARA AI Virtual Try-On Showcase" width="90%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);" />
+  </a>
 
 </div>
 
 <br />
+
+---
+
+## 🌐 Live Website Demo
+
+> 🚀 **Explore the Live Application:** [https://zivaraicloth.netlify.app/](https://zivaraicloth.netlify.app/)  
+> 🎭 **Interactive Admin Panel Demo:** [https://zivaraicloth.netlify.app/admin](https://zivaraicloth.netlify.app/admin)
 
 ---
 
