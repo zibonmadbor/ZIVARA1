@@ -1,7 +1,7 @@
 <div align="center">
 
   <h1>✨ ZIVARA — Wear The Future</h1>
-  <p><strong>A Luxury AI-Powered Fashion E-Commerce Platform featuring Apple-Style 3D Scroll Canvas & Real-Time AI Virtual Try-On</strong></p>
+  <p><strong>A Luxury AI-Powered Fashion E-Commerce Platform with Interactive 3D Fitting Canvas & Real-Time AI Virtual Try-On</strong></p>
 
   <p>
     <img src="https://img.shields.io/badge/React-18.3-61DAFB.svg?style=for-the-badge&logo=react&logoColor=black" alt="React 18" />
@@ -15,7 +15,7 @@
 
   <br />
 
-  <img src="src/assets/ai-tryon-promo.jpg" alt="ZIVARA AI Virtual Try-On Banner" width="90%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);" />
+  <img src="src/assets/ai-tryon-promo.jpg" alt="ZIVARA AI Virtual Try-On Showcase" width="90%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);" />
 
 </div>
 
@@ -23,133 +23,95 @@
 
 ---
 
-## 🌟 Overview
+## 🌟 Project Overview
 
-**ZIVARA** is a next-generation luxury fashion e-commerce application designed to revolutionize online shopping. By combining ultra-sleek modern design aesthetics with **Google Gemini Generative AI**, ZIVARA closes the gap between digital shopping and physical fitting rooms. 
-
-Whether exploring the interactive Apple-style 3D hero canvas or trying on garments virtually with personal photos, ZIVARA offers an unforgettable, futuristic user experience.
+**ZIVARA** is an advanced, premium fashion e-commerce platform designed to bridge the gap between digital online shopping and physical fitting rooms. By integrating **Google Gemini Multimodal AI**, ZIVARA empowers users to upload a photo and instantly see how any garment or accessory fits them in real-time.
 
 ---
 
-## 🎬 Highlighted Signature Features
+## ✨ Key Features & Architecture
 
-### 🍏 1. Apple-Style 3D Scroll Canvas Hero Section
-Inspired by Apple’s iconic product reveals, ZIVARA features a high-performance **HTML5 Canvas 3D Scroll Animation Hero Banner**:
-* **Smooth Frame Interpolation:** As the user scrolls down the landing page, a high-resolution sequence of luxury fashion apparel smoothly animates frame-by-frame.
-* **Dynamic Scale & Parallax:** Garment textures zoom and reveal details naturally aligned with scroll progress.
-* **Interactive Overlay & Micro-Animations:** Floating glassmorphic typography, luxury CTA buttons, and real-time scroll progress indicators bring the hero section to life.
-
-<div align="center">
-  <img src="src/assets/hero-1.jpg" alt="Hero Banner 1" width="30%" style="border-radius: 8px;" />
-  <img src="src/assets/hero-2.jpg" alt="Hero Banner 2" width="30%" style="border-radius: 8px;" />
-  <img src="src/assets/hero-3.jpg" alt="Hero Banner 3" width="30%" style="border-radius: 8px;" />
-</div>
+### 🚀 1. Interactive 3D Canvas Hero Section (`WEAR THE FUTURE`)
+The landing page opens with a custom-crafted **Interactive 3D Fit Canvas Hero Section**:
+* **Scroll-Driven Animation:** Scrolling smoothly rotates and morphs high-resolution fashion frames in real-time.
+* **Live AI HUD HUD Telemetry Overlay:** Real-time fitting telemetry indicators display body alignment, tension calculations, and mesh rendering status as the user scrolls.
+* **Glassmorphic Hero Typography:** Features bold "WEAR THE FUTURE" branding with direct Virtual Try-On and Shop Collection call-to-action buttons.
 
 ---
 
-### 🤖 2. Generative AI Virtual Try-On (Photo Try-On Engine)
-Shopping online often leaves customers guessing how clothes will actually look on them. ZIVARA solves this with a built-in **AI Virtual Try-On Studio** powered by **Google Gemini Vision**:
+### 🤖 2. Generative AI Virtual Try-On (Photo Try-On)
+ZIVARA includes a dedicated **AI Virtual Try-On Studio** allowing customers to test clothing before buying:
 
 #### 📸 How Photo Try-On Works:
-1. **Choose Any Garment:** Select from over 50+ catalog items across Men, Women, Kids, or Accessories (Suits, Jackets, Sarees, Dresses, Handbags, Sunglasses, Jewelry, Watches, Belts).
-2. **Upload Your Photo:** Customers upload a clear personal photo or pick from built-in model presets.
-3. **Multimodal AI Processing:** The system transmits the user's photo and chosen garment image to the **Google Gemini 2.5 AI Vision** backend with custom spatial prompts.
-4. **Realistic Cloth Fitting & Drape Simulation:** The AI seamlessly renders the clothing onto the customer's body—preserving original pose, skin lighting, natural fabric folds, and shadows.
-5. **Instant Download & Purchase:** Customers can preview the result, share it, or add the item straight to their cart!
+1. **Garment Selection:** Choose any product from the catalog (Men, Women, Kids, or Wearable Accessories like Suits, Jackets, Dresses, Sunglasses, Handbags, Jewelry, Watches, and Belts).
+2. **User Photo Upload:** Upload a personal photo or select from pre-configured model presets.
+3. **Multimodal AI Processing:** The system sends both images to **Google Gemini 2.5 Vision AI** with specialized prompt engineering.
+4. **Realistic Photorealistic Preview:** The AI realistically renders the item onto the user's photo—maintaining posture, body proportions, natural lighting, and fabric drape folds.
+5. **Add to Cart & Checkout:** Preview the final generated image and add the product directly to the shopping cart.
 
 ---
 
-### 🛍️ 3. Comprehensive E-Commerce Experience
-* **50+ Trending HD Products:** Dynamic catalog with Men, Women, Kids, and Wearable Accessories categories.
-* **Live Search & Category Filtering:** Instant client-side filtering by category, price, new arrivals, and sale items.
-* **Smart Shopping Cart & Coupons:** Dynamic subtotal calculation, discount coupon code validation, and free shipping triggers.
-* **Order Tracking Pipeline:** Visual order status timeline (Pending ➔ Confirmed ➔ Processing ➔ Shipped ➔ Delivered).
-* **Firebase & JWT Security:** Multi-role authentication (Customer, Moderator, Admin, Super Admin) with backend token verification.
+### 🛍️ 3. Full E-Commerce Platform
+* **50+ Products Catalog:** Men, Women, Kids, and Wearable Accessories.
+* **Instant Search & Dynamic Filter:** Filter by category, price range, new arrivals, and flash sales.
+* **Shopping Cart & Coupon Engine:** Real-time cart updates with dynamic coupon code validation.
+* **Order Status Tracker:** Visual step-by-step order tracking timeline (Pending ➔ Confirmed ➔ Processing ➔ Shipped ➔ Delivered).
+* **Role-Based Authentication:** Firebase Auth (Email/Password & Google Sign-In) synced with JWT MongoDB session security.
 
 ---
 
-### ⚡ 4. Advanced Admin Control Center & Demo Mode
-* **Analytics Dashboard:** Visual sales and revenue charts powered by Recharts.
-* **Full CRUD Operations:** Manage Products, Categories, Coupons, Sliders, Orders, and User Roles.
-* **Portfolio Demo Mode:** Built-in automatic Demo Mode (`VITE_IS_DEMO`) that safely simulates database mutations for static hosting showcases (Netlify / Vercel).
+### ⚡ 4. Admin Management Dashboard
+* **Analytics Overview:** Real-time sales, total orders, customer metrics, and revenue charts using Recharts.
+* **Product & Category CRUD:** Manage products, categories, coupons, promotional banners, and orders.
+* **Safe Portfolio Demo Mode:** Auto-detects static hosting (Netlify/Vercel) to safely simulate database operations without affecting live databases.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technologies |
+| Layer | Technology |
 | :--- | :--- |
-| **Frontend Framework** | React 18, TypeScript, Vite 5 |
-| **Styling & UI** | Tailwind CSS v3.4, shadcn/ui, Lucide React, Glassmorphism CSS |
-| **Animations** | Framer Motion, HTML5 Canvas 3D Frame Animation Engine |
-| **Artificial Intelligence** | Google Gemini 2.5 Flash / Flash-Lite Multimodal Vision API |
-| **Backend API** | Node.js, Express.js |
-| **Database** | MongoDB (Mongoose ORM) |
-| **Authentication** | Firebase Auth (Google OAuth & Email/Password) + JWT Verification |
-| **State & Data Fetching** | React Context API, TanStack React Query v5 |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion |
+| **3D & Canvas** | HTML5 Canvas API, Frame Preloading Engine |
+| **AI Integration** | Google Gemini 2.5 Flash / Flash-Lite Vision API |
+| **Backend** | Node.js, Express.js |
+| **Database** | MongoDB & Mongoose ORM |
+| **Authentication** | Firebase Authentication + JWT Verification |
+| **Data & State** | React Context API, TanStack React Query v5 |
 
 ---
 
-## 💻 Installation & Local Setup
+## 💻 Local Installation & Setup Guide
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18.0 or higher)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- [MongoDB](https://www.mongodb.com/) instance (Local or MongoDB Atlas)
+- [Node.js](https://nodejs.org/) (v18+)
+- [MongoDB](https://www.mongodb.com/) (Local or Atlas)
 - Google Gemini API Key
 
-### 1. Clone the Repository
 ```bash
+# 1. Clone repo
 git clone https://github.com/zibonmadbor/ZIVARA1.git
 cd ZIVARA1
-```
 
-### 2. Frontend Setup
-```bash
-# Install frontend dependencies
+# 2. Install frontend dependencies
 npm install
 
-# Start Vite development server
-npm run dev
-```
-
-### 3. Backend Setup
-```bash
-# Navigate to server folder
+# 3. Install backend dependencies
 cd server
-
-# Install backend dependencies
 npm install
+cd ..
 
-# Start Express development server
+# 4. Start frontend & backend
+# Terminal 1 (Frontend):
 npm run dev
+
+# Terminal 2 (Backend):
+cd server && npm run dev
 ```
 
 ---
 
-## 🔐 Environment Variables Configuration
-
-Create a `.env` file in the root directory for frontend settings:
-```env
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-```
-
-Create a `.env` file in the `server/` directory for backend settings:
-```env
-PORT=5000
-MONGODB_URI=mongodb+srv://your_mongo_credentials
-GEMINI_API_KEY=your_google_gemini_api_key
-JWT_SECRET=your_jwt_secret_key
-```
-
----
-
-## 👥 Project Team & Credits
+## 👥 Credits
 
 - **Full-Stack Development:** Zibon Madber & Hafizur Rahman
 - **Project Planning & Architecture:** Mahfuz Hossain
@@ -157,5 +119,5 @@ JWT_SECRET=your_jwt_secret_key
 ---
 
 <div align="center">
-  <p>Made with ❤️ for the future of fashion e-commerce.</p>
+  <p>ZIVARA — Wear the Future</p>
 </div>
