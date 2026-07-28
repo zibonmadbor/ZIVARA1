@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { isDemoMode, notifyDemoAction } from "@/lib/demoMode";
 
 interface Product {
   id: string;
@@ -89,6 +90,21 @@ export default function AdminProducts() {
       isBestSeller: formData.isBestSeller,
     };
 
+    if (isDemoMode()) {
+      notifyDemoAction(
+        editingProduct ? "Product Update" : "Product Creation",
+        `Simulated: "${payload.name}" was ${editingProduct ? "updated" : "added"} in demo view!`
+      );
+      if (editingProduct) {
+        setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...payload, id: editingProduct.id } : p)));
+      } else {
+        setProducts((prev) => [{ ...payload, id: `demo-${Date.now()}` }, ...prev]);
+      }
+      setIsDialogOpen(false);
+      resetForm();
+      return;
+    }
+
     try {
       const token = localStorage.getItem("zivara_token");
       const url = editingProduct ? `/api/admin/products/${editingProduct.id}` : "/api/admin/products";
@@ -132,6 +148,12 @@ export default function AdminProducts() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
     
+    if (isDemoMode()) {
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      notifyDemoAction("Product Deletion", "Simulated: Product removed from local table.");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("zivara_token");
       const res = await fetch(`/api/admin/products/${id}`, {

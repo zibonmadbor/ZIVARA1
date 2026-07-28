@@ -11,7 +11,8 @@ import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminSidebar } from "./AdminSidebar";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
+import { isDemoMode } from "@/lib/demoMode";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -51,8 +52,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <AdminSidebar />
-      <main className="flex-1 overflow-auto">
-        <div className="container-premium py-6">{children}</div>
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {isDemoMode() && (
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-xs sm:text-sm text-amber-500 flex items-center justify-center gap-2 font-medium shrink-0">
+            <Info className="h-4 w-4 shrink-0" />
+            <span>
+              <strong>🎭 Demo Mode Active:</strong> You are exploring the Admin Panel demo. All actions (Create/Edit/Delete) are simulated locally and will not alter the real database.
+            </span>
+          </div>
+        )}
+        <div className="flex-1 overflow-auto">
+          <div className="container-premium py-6">{children}</div>
+        </div>
       </main>
     </div>
   );

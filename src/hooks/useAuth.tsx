@@ -9,6 +9,7 @@ import {
   User as FirebaseUser
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
+import { isDemoMode, DEMO_ADMIN_USER } from "@/lib/demoMode";
 
 type AppRole = "super_admin" | "admin" | "moderator" | "customer";
 
@@ -71,14 +72,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const token = await firebaseUser.getIdToken();
           localStorage.setItem("zivara_token", token);
           const syncedUser = await syncBackendUser(firebaseUser, token);
-          setUser(syncedUser);
+          setUser(syncedUser || (isDemoMode() ? DEMO_ADMIN_USER : null));
         } catch (err) {
           console.error("Auth state synchronization error:", err);
-          setUser(null);
+          setUser(isDemoMode() ? DEMO_ADMIN_USER : null);
         }
       } else {
-        setUser(null);
-        localStorage.removeItem("zivara_token");
+        if (isDemoMode()) {
+          setUser(DEMO_ADMIN_USER);
+        } else {
+          setUser(null);
+          localStorage.removeItem("zivara_token");
+        }
       }
       setIsLoading(false);
     });
@@ -87,6 +92,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string): Promise<{ error?: string, user?: DBUser }> => {
+    if (isDemoMode()) {
+      setUser(DEMO_ADMIN_USER);
+      return { user: DEMO_ADMIN_USER };
+    }
+
     try {
       setIsLoading(true);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);

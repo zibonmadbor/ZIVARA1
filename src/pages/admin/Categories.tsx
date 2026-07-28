@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { isDemoMode, notifyDemoAction } from "@/lib/demoMode";
 
 interface Category {
   id: string;
@@ -69,6 +70,22 @@ export default function AdminCategories() {
         slug: formData.slug || generateSlug(formData.name)
       };
 
+    if (isDemoMode()) {
+      notifyDemoAction(
+        editingCategory ? "Category Update" : "Category Creation",
+        `Simulated: "${payload.name}" was ${editingCategory ? "updated" : "added"} in demo view!`
+      );
+      if (editingCategory) {
+        setCategories((prev) => prev.map((c) => (c.id === editingCategory.id ? { ...payload, id: editingCategory.id, createdAt: c.createdAt } : c)));
+      } else {
+        setCategories((prev) => [{ ...payload, id: `demo-cat-${Date.now()}`, createdAt: new Date().toISOString() }, ...prev]);
+      }
+      setIsDialogOpen(false);
+      resetForm();
+      return;
+    }
+
+    try {
       const res = await fetch(url, {
         method,
         headers: {
@@ -103,6 +120,13 @@ export default function AdminCategories() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
+    
+    if (isDemoMode()) {
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+      notifyDemoAction("Category Deletion", "Simulated: Category removed from local list.");
+      return;
+    }
+
     try {
       const res = await fetch(`/api/admin/categories/${id}`, {
         method: "DELETE",

@@ -81,10 +81,28 @@ export default function AdminLogin() {
             <CardDescription>Sign in to access the admin dashboard</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Demo hint */}
-            <div className="mb-4 p-3 bg-primary/10 rounded-lg text-xs text-muted-foreground">
-              <strong>Demo:</strong> Use <code>admin@zivara.com</code> or{" "}
-              <code>moderator@zivara.com</code> with any password.
+            {/* Demo hint & 1-Click login */}
+            <div className="mb-4 p-3 bg-primary/10 rounded-lg text-xs text-muted-foreground space-y-2">
+              <div>
+                <strong>Demo Access:</strong> Use <code>admin@zivara.com</code> or click below for instant preview.
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full text-xs font-semibold bg-background hover:bg-accent"
+                onClick={async () => {
+                  setEmail("admin@zivara.com");
+                  setPassword("demo123");
+                  const { error, user } = await signIn("admin@zivara.com", "demo123");
+                  if (!error && user) {
+                    toast({ title: "Welcome to Demo Admin!", description: "Exploring in read-only / simulation mode." });
+                    navigate("/admin");
+                  }
+                }}
+              >
+                ⚡ 1-Click Login as Demo Admin
+              </Button>
             </div>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
