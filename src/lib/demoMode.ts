@@ -1,7 +1,19 @@
 import { toast } from "@/hooks/use-toast";
 
 export const isDemoMode = (): boolean => {
-  return import.meta.env.VITE_IS_DEMO === "true";
+  // Explicit override
+  if (import.meta.env.VITE_IS_DEMO === "false") return false;
+  if (import.meta.env.VITE_IS_DEMO === "true") return true;
+
+  // Auto-detect Netlify, Vercel, or custom live domain when no local backend is present
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host.includes("netlify.app") || host.includes("vercel.app") || host.includes("github.io") || host !== "localhost") {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 export const DEMO_ADMIN_USER = {
