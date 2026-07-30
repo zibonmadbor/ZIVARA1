@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const Product = require('../models/Product');
+const Category = require('../models/Category');
+const Slider = require('../models/Slider');
+const Settings = require('../models/Settings');
+const Coupon = require('../models/Coupon');
+const Notification = require('../models/Notification');
+const Review = require('../models/Review');
+const User = require('../models/User');
 
 // Load env vars
 dotenv.config();
@@ -1037,31 +1044,165 @@ const products = [
   }
 ];
 
+const categories = [
+  {
+    name: "Women's Fashion",
+    slug: "women",
+    description: "Elegant and modern designs curated for contemporary women.",
+    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80",
+    isActive: true,
+    order: 1
+  },
+  {
+    name: "Men's Fashion",
+    slug: "men",
+    description: "Sophisticated tailoring and casual luxury for modern men.",
+    image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=800&auto=format&fit=crop&q=80",
+    isActive: true,
+    order: 2
+  },
+  {
+    name: "Accessories",
+    slug: "accessories",
+    description: "Handcrafted bags, jewelry, scarves, and essential accents.",
+    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80",
+    isActive: true,
+    order: 3
+  },
+  {
+    name: "Cyberpunk Techwear",
+    slug: "cyberpunk",
+    description: "Futuristic garments infused with smart fabrics and modular utility.",
+    image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800&auto=format&fit=crop&q=80",
+    isActive: true,
+    order: 4
+  }
+];
+
+const sliders = [
+  {
+    title: "WEAR THE FUTURE",
+    subtitle: "Discover ZIVARA's 2026 High-Tech Couture Collection",
+    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&auto=format&fit=crop&q=80",
+    link: "/products",
+    buttonText: "Explore Collection",
+    isActive: true,
+    order: 1
+  },
+  {
+    title: "MINIMALIST LUXURY",
+    subtitle: "Timeless silhouettes crafted from sustainable organic fabrics",
+    image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=1600&auto=format&fit=crop&q=80",
+    link: "/products?category=women",
+    buttonText: "Shop Women",
+    isActive: true,
+    order: 2
+  },
+  {
+    title: "NEO-TOKYO TECHWEAR",
+    subtitle: "Waterproof, breathable & modular urban outerwear",
+    image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1600&auto=format&fit=crop&q=80",
+    link: "/products?category=men",
+    buttonText: "Shop Techwear",
+    isActive: true,
+    order: 3
+  }
+];
+
+const coupons = [
+  {
+    code: "WELCOME10",
+    discount_type: "percentage",
+    discount_value: 10,
+    min_order_amount: 50,
+    valid_until: new Date("2027-12-31"),
+    usage_limit: 1000,
+    is_active: true
+  },
+  {
+    code: "ZIVARA20",
+    discount_type: "percentage",
+    discount_value: 20,
+    min_order_amount: 150,
+    valid_until: new Date("2027-12-31"),
+    usage_limit: 500,
+    is_active: true
+  },
+  {
+    code: "FLASH50",
+    discount_type: "fixed",
+    discount_value: 50,
+    min_order_amount: 200,
+    valid_until: new Date("2027-12-31"),
+    usage_limit: 200,
+    is_active: true
+  }
+];
+
+const notifications = [
+  {
+    title: "System Update Complete",
+    message: "ZIVARA database successfully synchronized with MongoDB Atlas cloud.",
+    type: "system",
+    is_read: false
+  },
+  {
+    title: "Store Online",
+    message: "ZIVARA Vercel production deployment is live and accepting orders.",
+    type: "system",
+    is_read: false
+  }
+];
+
 const seedDB = async () => {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/zivara';
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
 
-    // Clear existing products
+    // 1. Seed Products
     await Product.deleteMany({});
-    console.log('Cleared old products collection');
-
-    // Insert new products
     const createdProducts = await Product.insertMany(products);
-    console.log(`Successfully seeded ${createdProducts.length} new trending products!`);
+    console.log(`✅ Seeded ${createdProducts.length} Products`);
 
-    // Optionally create a pre-elevated local Admin user placeholder in MongoDB 
-    // in case they want a manual verification record ready
-    console.log('Ensuring demo admin accounts exist...');
-    const adminEmail = 'admin@zivara.com';
-    const modEmail = 'moderator@zivara.com';
-    
-    // We don't seed Firebase UID here as that is created in Firebase client registration,
-    // but having these emails ready for automatic elevation in routes is confirmed.
+    // 2. Seed Categories
+    await Category.deleteMany({});
+    const createdCategories = await Category.insertMany(categories);
+    console.log(`✅ Seeded ${createdCategories.length} Categories`);
+
+    // 3. Seed Sliders
+    await Slider.deleteMany({});
+    const createdSliders = await Slider.insertMany(sliders);
+    console.log(`✅ Seeded ${createdSliders.length} Sliders`);
+
+    // 4. Seed Settings
+    await Settings.deleteMany({});
+    await Settings.create({
+      storeName: "ZIVARA Wear The Future",
+      contactEmail: "support@zivara.com",
+      bkashMerchantNumber: "+8801751602201",
+      notificationActive: true,
+      notificationText: "✨ Flash Sale Live: Use code WELCOME10 for 10% off your first order!",
+      notificationLink: "/products",
+      flashSaleActive: true,
+      flashSaleTitle: "Summer Flash Sale",
+      flashSaleDiscount: "Up to 50% Off",
+      flashSaleEndTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    });
+    console.log(`✅ Seeded Store Settings`);
+
+    // 5. Seed Coupons
+    await Coupon.deleteMany({});
+    const createdCoupons = await Coupon.insertMany(coupons);
+    console.log(`✅ Seeded ${createdCoupons.length} Coupons`);
+
+    // 6. Seed Notifications
+    await Notification.deleteMany({});
+    const createdNotifications = await Notification.insertMany(notifications);
+    console.log(`✅ Seeded ${createdNotifications.length} Notifications`);
 
     mongoose.connection.close();
-    console.log('Database seeding finished. Connection closed.');
+    console.log('🎉 Database seeding complete! All collections populated.');
     process.exit(0);
   } catch (error) {
     console.error('Seeding database error:', error);
