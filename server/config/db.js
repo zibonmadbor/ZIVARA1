@@ -1,13 +1,26 @@
 const mongoose = require('mongoose');
 
+let cached = global._mongooseCache;
+if (!cached) {
+  cached = global._mongooseCache = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
-  try {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
     const connUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/zivara';
-    const conn = await mongoose.connect(connUri);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    cached.promise = mongoose.connect(connUri).then((m) => m);
+  }
+
+  try {
+    cached.conn = await cached.promise;
+    console.log(`MongoDB Connected: ${cached.conn.connection.host}`);
+    return cached.conn;
   } catch (error) {
+    cached.promise = null;
     console.error(`Database Connection Error: ${error.message}`);
-    process.exit(1);
+    throw error;
   }
 };
 
