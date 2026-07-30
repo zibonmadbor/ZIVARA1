@@ -1,14 +1,15 @@
 import { toast } from "@/hooks/use-toast";
 
 export const isDemoMode = (): boolean => {
-  // Explicit override
+  // Explicit override via environment variable
   if (import.meta.env.VITE_IS_DEMO === "false") return false;
   if (import.meta.env.VITE_IS_DEMO === "true") return true;
 
-  // Auto-detect Netlify, Vercel, or custom live domain when no local backend is present
+  // Only auto-detect demo mode on known demo hosting platforms (not Vercel production)
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
-    if (host.includes("netlify.app") || host.includes("vercel.app") || host.includes("github.io") || host !== "localhost") {
+    // Don't auto-activate demo mode on Vercel — the backend is deployed there too
+    if (host.includes("github.io")) {
       return true;
     }
   }

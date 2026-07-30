@@ -61,14 +61,13 @@ export default function AdminCategories() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const url = editingCategory ? `/api/admin/categories/${editingCategory.id}` : "/api/admin/categories";
-      const method = editingCategory ? "PUT" : "POST";
-      
-      const payload = {
-        ...formData,
-        slug: formData.slug || generateSlug(formData.name)
-      };
+    const url = editingCategory ? `/api/admin/categories/${editingCategory.id}` : "/api/admin/categories";
+    const method = editingCategory ? "PUT" : "POST";
+    
+    const payload = {
+      ...formData,
+      slug: formData.slug || generateSlug(formData.name)
+    };
 
     if (isDemoMode()) {
       notifyDemoAction(
