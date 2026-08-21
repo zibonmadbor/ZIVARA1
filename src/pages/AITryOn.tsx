@@ -85,7 +85,11 @@ export default function AITryOn() {
     const result = await generateTryOn(
       userImage,
       selectedClothing.image,
-      selectedClothing.name
+      selectedClothing.name,
+      selectedClothing.subcategory || '',
+      selectedClothing.description || '',
+      selectedClothing.category || '',
+      selectedClothing.colors || []
     );
 
     if (result?.generatedImage) {
@@ -96,9 +100,16 @@ export default function AITryOn() {
   const selectedClothing = allProducts.find((p) => p.id === selectedClothingId);
 
   const filteredProducts = allProducts.filter((product) => {
+    // If this product is selected, always show it regardless of category/search filter
+    if (product.id === selectedClothingId) return true;
     const matchesCategory = selectedCategory === "all" || product.category?.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch = !productSearch.trim() || product.name.toLowerCase().includes(productSearch.toLowerCase()) || product.subcategory?.toLowerCase().includes(productSearch.toLowerCase());
     return matchesCategory && matchesSearch;
+  }).sort((a, b) => {
+    // Selected product always goes to the very top (index 0)
+    if (a.id === selectedClothingId) return -1;
+    if (b.id === selectedClothingId) return 1;
+    return 0;
   });
 
   const handleDownload = () => {
@@ -313,13 +324,17 @@ export default function AITryOn() {
                         alt={product.name}
                         className="w-full aspect-square object-cover"
                       />
-                      {selectedClothingId === product.id && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                          <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                            <Sparkles className="w-4 h-4 text-primary-foreground" />
+                      {selectedClothingId === product.id ? (
+                        <div className="absolute inset-0 bg-primary/20 border-2 border-primary rounded-lg flex flex-col items-center justify-between p-1.5 pointer-events-none">
+                          <span className="self-end px-1.5 py-0.5 bg-primary text-primary-foreground text-[9px] font-bold uppercase rounded shadow-sm">
+                            Selected
                           </span>
+                          <span className="w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                            <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
+                          </span>
+                          <span />
                         </div>
-                      )}
+                      ) : null}
                       <div className="p-1.5 bg-card/90 text-[11px] truncate font-medium">
                         {product.name}
                       </div>
@@ -329,12 +344,20 @@ export default function AITryOn() {
               </div>
               
               {selectedClothing && (
-                <div className="mt-4 p-3 bg-secondary rounded-lg flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground truncate max-w-[180px]">
-                      {selectedClothing.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground capitalize">{selectedClothing.category}</p>
+                <div className="mt-4 p-3 bg-primary/10 border border-primary/30 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={selectedClothing.image}
+                      alt={selectedClothing.name}
+                      className="w-10 h-10 object-cover rounded-md border border-border"
+                    />
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-primary tracking-wider">Ready to Try On</span>
+                      <p className="text-xs font-semibold text-foreground truncate max-w-[150px]">
+                        {selectedClothing.name}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground capitalize">{selectedClothing.category}</p>
+                    </div>
                   </div>
                   <p className="text-sm font-bold text-primary">${selectedClothing.price}</p>
                 </div>

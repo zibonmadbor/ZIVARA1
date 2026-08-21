@@ -132,7 +132,7 @@ export default function Navbar() {
             {/* Logo */}
             <Link to="/" className="flex items-center">
               <span className="text-2xl md:text-3xl font-display font-bold tracking-widest text-foreground">
-                {settings?.storeName || "ZIVARA"}
+                ZIVARA
               </span>
             </Link>
 
@@ -213,7 +213,7 @@ export default function Navbar() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-10">
                   <span className="text-2xl font-display font-bold tracking-widest">
-                    {settings?.storeName || "ZIVARA"}
+                    ZIVARA
                   </span>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}

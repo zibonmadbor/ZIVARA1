@@ -1,22 +1,9 @@
 
 // ============================================================
-// AI TRY-ON HOOK - Frontend Only (Mock Implementation)
+// AI TRY-ON HOOK - Replicate IDM-VTON Integration
 // ============================================================
-// TODO: Connect to your Express backend:
-//   POST /api/ai/tryon  { userImage: base64, clothingImage: base64, clothingName }
-//   -> { generatedImage: base64 }
-//
-// On the backend, you can integrate:
-//   - Replicate API (fashn-ai/tryon model)
-//   - HuggingFace Inference API
-//   - Any virtual try-on AI model
-//
-// Express endpoint example:
-//   router.post('/ai/tryon', protect, async (req, res) => {
-//     const { userImage, clothingImage, clothingName } = req.body;
-//     const result = await callAIService(userImage, clothingImage);
-//     res.json({ generatedImage: result.output });
-//   });
+// Sends user photo + product image to backend
+// Backend uses Replicate IDM-VTON to generate virtual try-on
 // ============================================================
 
 import { useState } from "react";
@@ -36,7 +23,11 @@ export function useAITryOn() {
   const generateTryOn = async (
     userImage: string,
     clothingImage: string,
-    clothingName: string
+    clothingName: string,
+    clothingType?: string,
+    clothingDescription?: string,
+    clothingGender?: string,
+    clothingColors?: string[]
   ): Promise<TryOnResult | null> => {
     setIsProcessing(true);
     setProgress(0);
@@ -70,20 +61,29 @@ export function useAITryOn() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("zivara_token")}`
         },
-        body: JSON.stringify({ userImage, clothingImage: clothingBase64, clothingName })
+        body: JSON.stringify({
+          userImage,
+          clothingImage: clothingBase64,
+          clothingName,
+          clothingType: clothingType || '',
+          clothingDescription: clothingDescription || '',
+          clothingGender: clothingGender || '',
+          clothingColors: clothingColors || []
+        })
       });
 
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || data.error || "Gemini AI generation failed");
+        throw new Error(data.message || data.error || "AI generation failed");
       }
 
       setProgress(100);
       
+      const providerLabel = data.provider?.includes('nano-banana') ? 'Gemini 2.5 Flash' : data.provider || 'AI';
       toast({
         title: "AI Generation Success! ✨",
-        description: `Gemini 2.5 Flash Image generated outfit preview for "${clothingName}"!`,
+        description: `${providerLabel} generated outfit preview for "${clothingName}"!`,
       });
 
       clearInterval(progressInterval);
@@ -106,4 +106,5 @@ export function useAITryOn() {
 
   return { generateTryOn, isProcessing, progress, error };
 }
+
 

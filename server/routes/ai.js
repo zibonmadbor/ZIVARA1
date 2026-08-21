@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const Replicate = require('replicate');
 
 // Helper to extract clean base64 data and mime type from Data URI
 function parseDataURI(dataUri) {
@@ -14,117 +15,120 @@ function parseDataURI(dataUri) {
 }
 
 // @route   POST /api/ai/tryon
-// @desc    Perform true Image-to-Image Virtual Try-On using Gemini 2.5 Flash Image API
+// @desc    Virtual Try-On using Replicate google/nano-banana (Gemini 2.5 Flash Image) - Fast & Cost-Effective
 // @access  Public
 router.post('/ai/tryon', async (req, res) => {
   try {
-    const { userImage, clothingImage, clothingName } = req.body;
+    const { userImage, clothingImage, clothingName, clothingType, clothingDescription, clothingGender, clothingColors } = req.body;
 
     if (!userImage || !clothingImage) {
       return res.status(400).json({ message: 'User photo and clothing image are required' });
     }
 
-    const geminiKey = process.env.GEMINI_API_KEY;
+    const replicateToken = process.env.REPLICATE_API_TOKEN;
 
-    if (!geminiKey) {
-      return res.status(400).json({
-        message: 'GEMINI_API_KEY is missing in server/.env. Please configure your API key from https://aistudio.google.com/app/apikey'
+    if (!replicateToken) {
+      return res.status(500).json({
+        message: 'REPLICATE_API_TOKEN is missing in server/.env. Please configure your token.'
       });
     }
 
-    console.log('AI Try-On: Executing Gemini 2.5 Flash Image generation pipeline...');
+    console.log('AI Try-On: Executing Replicate google/nano-banana (Gemini 2.5 Flash Image)...');
 
-    // Extract clean base64 and mime_type
-    const parsedUserImg = parseDataURI(userImage);
-    const parsedClothingImg = parseDataURI(clothingImage);
+    const replicate = new Replicate({ auth: replicateToken });
 
-    if (!parsedUserImg || !parsedClothingImg) {
+    // Parse base64 Data URIs
+    const parsedUser = parseDataURI(userImage);
+    const parsedClothing = parseDataURI(clothingImage);
+
+    if (!parsedUser || !parsedClothing) {
       return res.status(400).json({ message: 'Images must be valid base64 Data URIs' });
     }
 
-    // Gemini 2.5 Flash Image VTON prompt payload
-    const requestBody = {
-      contents: [{
-        role: "user",
-        parts: [
-          {
-            text: `Virtual Try-On Task: You are an expert AI fashion generator. Take the person from Image 1 and generate a new photorealistic image where they are wearing the exact outfit/garment shown in Image 2 (${clothingName || 'selected outfit'}).
+    const userBuffer = Buffer.from(parsedUser.data, 'base64');
+    const clothingBuffer = Buffer.from(parsedClothing.data, 'base64');
 
-Requirements:
-- Preserve the person's face, body proportions, pose, and background from Image 1.
-- Replace their current outfit with the garment shown in Image 2.
-- Realistic fabric texture, lighting, and natural fit.
-- You MUST output a generated image.`
-          },
-          {
-            inline_data: {
-              mime_type: parsedUserImg.mimeType,
-              data: parsedUserImg.data
-            }
-          },
-          {
-            inline_data: {
-              mime_type: parsedClothingImg.mimeType,
-              data: parsedClothingImg.data
-            }
-          }
-        ]
-      }],
-      generationConfig: {
-        responseModalities: ["IMAGE"]
-      }
-    };
+    const userFile = new File([userBuffer], 'user_photo.jpg', { type: parsedUser.mimeType });
+    const clothingFile = new File([clothingBuffer], 'garment_product.jpg', { type: parsedClothing.mimeType });
 
-    const modelsToTry = [
-      "gemini-2.0-flash-lite",
-      "gemini-2.0-flash",
-      "gemini-2.5-flash-image",
-      "gemini-3.1-flash-image"
-    ];
-
-    let lastError = null;
-
-    for (const modelName of modelsToTry) {
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`;
-      try {
-        console.log(`Attempting Gemini model: ${modelName}`);
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.candidates && data.candidates.length > 0) {
-          const parts = data.candidates[0].content?.parts;
-          const imagePart = parts?.find(p => p.inline_data);
-
-          if (imagePart && imagePart.inline_data) {
-            const generatedMimeType = imagePart.inline_data.mime_type || 'image/png';
-            const generatedBase64 = imagePart.inline_data.data;
-            const generatedDataUri = `data:${generatedMimeType};base64,${generatedBase64}`;
-
-            console.log(`AI Try-On: Successfully generated image with ${modelName}`);
-            return res.json({
-              generatedImage: generatedDataUri,
-              provider: modelName
-            });
-          }
-        } else {
-          lastError = data.error?.message || `Model ${modelName} returned status ${response.status}`;
-          console.warn(`Model ${modelName} failed:`, lastError);
-        }
-      } catch (err) {
-        lastError = err.message;
-        console.warn(`Error connecting to model ${modelName}:`, err.message);
-      }
+    const genderTag = (clothingGender || '').toLowerCase();
+    let genderDirective = '';
+    if (genderTag.includes('women') || genderTag.includes('female')) {
+      genderDirective = `\n- Women's Tailoring: Ensure accurate feminine tailoring, delicate neckline, elegant waist and bust contouring, and authentic women's fit conforming naturally to a female body.`;
+    } else if (genderTag.includes('men') || genderTag.includes('male')) {
+      genderDirective = `\n- Men's Tailoring: Ensure masculine tailoring, broad shoulder alignment, proper chest and collar structure, and authentic men's fit conforming naturally to a male body.`;
+    } else if (genderTag.includes('kid') || genderTag.includes('child')) {
+      genderDirective = `\n- Kids' Tailoring: Fit appropriately for juvenile/kids proportions.`;
     }
 
-    // If all Gemini models fail or key hits quota limit:
-    return res.status(400).json({
-      message: `Gemini API Error: ${lastError || 'Quota limit reached'}. Please ensure your API key has active quota from https://aistudio.google.com/app/apikey`,
-      error: lastError
+    const colorHint = Array.isArray(clothingColors) && clothingColors.length > 0
+      ? `\n- Primary Product Colors: ${clothingColors.join(', ')}`
+      : '';
+
+    console.log(`  → User image: ${(userBuffer.length / 1024).toFixed(0)}KB | Garment image: ${(clothingBuffer.length / 1024).toFixed(0)}KB`);
+    console.log(`  → Product: ${clothingName || 'Garment'} [Category: ${clothingGender || 'Unspecified'}] (${clothingType || 'Apparel'})`);
+
+    // High-precision prompt with strict color, pattern, and design replication
+    const prompt = `High-end photorealistic virtual try-on fashion photography.
+TASK: Dress the person in Image 1 in the EXACT clothing shown in Image 2.
+
+GARMENT SPECIFICATIONS:
+- Item: "${clothingName || 'Garment'}" (${clothingGender || 'Apparel'} - ${clothingType || 'Clothing'})
+- Description: ${clothingDescription || 'Matching image 2'}
+${colorHint}
+
+CRITICAL RULES FOR ACCURACY:
+1. STRICT VISUAL COLOR & PATTERN FIDELITY: The clothing worn on the person MUST match the EXACT colors, hues, prints, textures, patterns, and fabric material visible in Image 2. Look closely at Image 2: if Image 2 shows a Navy Blue suit, the person MUST wear a Navy Blue suit; if Image 2 is white/gold, output white/gold; if red, output red. NEVER invert, change, or substitute colors.
+2. EXACT GARMENT & COMPLETE LAYERING: Replicate the precise apparel design and cut from Image 2. If the garment is a blazer, suit jacket, or coat, ALWAYS include an appropriate inner shirt (e.g. a crisp collared white dress shirt or undershirt as seen in Image 2). NEVER render a suit or blazer over bare skin.
+3. PRESERVE IDENTITY & BACKGROUND 100%: Keep the person's exact face, facial features, sunglasses/glasses, eyes, hair, skin tone, body pose, and natural background from Image 1 100% authentic and unchanged. ONLY replace their current clothes with the new outfit from Image 2.
+4. REALISTIC DRAPING & LIGHTING: The clothing must fit naturally with organic fabric folds, contact shadows under the collar and seams, conforming to their body posture.${genderDirective}`;
+
+    console.log('  → Calling Replicate google/nano-banana (Gemini 2.5 Flash Image)...');
+
+    const output = await replicate.run(
+      "google/nano-banana:5bdc2c7cd642ae33611d8c33f79615f98ff02509ab8db9d8ec1cc6c36d378fba",
+      {
+        input: {
+          prompt: prompt,
+          image_input: [userFile, clothingFile],
+          aspect_ratio: 'match_input_image',
+          output_format: 'png'
+        }
+      }
+    );
+
+    console.log('  → Model output received, type:', typeof output);
+
+    let generatedDataUri;
+
+    if (typeof output === 'string') {
+      console.log('  → Downloading image from output URL...');
+      const imageResponse = await fetch(output);
+      if (!imageResponse.ok) {
+        throw new Error('Failed to download generated image from Replicate');
+      }
+      const imageBuffer = await imageResponse.arrayBuffer();
+      const base64Image = Buffer.from(imageBuffer).toString('base64');
+      const contentType = imageResponse.headers.get('content-type') || 'image/png';
+      generatedDataUri = `data:${contentType};base64,${base64Image}`;
+    } else if (output && typeof output[Symbol.asyncIterator] === 'function') {
+      console.log('  → Reading stream output chunks...');
+      const chunks = [];
+      for await (const chunk of output) {
+        chunks.push(chunk);
+      }
+      const imageBuffer = Buffer.concat(chunks);
+      generatedDataUri = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+    } else {
+      throw new Error('Unexpected output format from Replicate model');
+    }
+
+    console.log('AI Try-On: ✅ Successfully generated with google/nano-banana (Gemini 2.5)!');
+
+    return res.json({
+      generatedImage: generatedDataUri,
+      provider: 'google/nano-banana',
+      message: `Generated virtual try-on with Gemini 2.5 Flash for "${clothingName}"`
     });
 
   } catch (error) {
@@ -137,4 +141,3 @@ Requirements:
 });
 
 module.exports = router;
-
