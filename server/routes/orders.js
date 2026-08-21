@@ -24,6 +24,70 @@ router.get('/', protect, moderatorOnly, async (req, res) => {
   }
 });
 
+const { sendOrderInvoiceEmail, generateInvoiceHtml } = require('../services/emailService');
+
+// @route   POST /api/orders/:id/send-invoice
+// @desc    Send order invoice to customer's email (Admin/Moderator only)
+// @access  Private/Admin
+router.post('/:id/send-invoice', protect, moderatorOnly, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (!order.invoice_number) {
+      order.invoice_number = `INV-${order.order_number}`;
+    }
+
+    // Fetch store settings if available
+    let storeSettings = {};
+    try {
+      const Setting = require('../models/Setting');
+      storeSettings = (await Setting.findOne()) || {};
+    } catch (e) {
+      console.warn('Could not fetch store settings:', e);
+    }
+
+    const emailResult = await sendOrderInvoiceEmail(order, storeSettings);
+
+    order.invoice_sent_at = new Date();
+    await order.save();
+
+    res.json({
+      message: `Invoice successfully emailed to ${order.customer_email}`,
+      previewUrl: emailResult.previewUrl,
+      invoice_sent_at: order.invoice_sent_at
+    });
+  } catch (error) {
+    console.error('Send Invoice Route Error:', error);
+    res.status(500).json({ message: 'Failed to send invoice email', error: error.message });
+  }
+});
+
+// @route   GET /api/orders/:id/invoice-html
+// @desc    Get raw invoice HTML for printing or direct preview
+// @access  Public
+router.get('/:id/invoice-html', async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).send('Order not found');
+    }
+
+    let storeSettings = {};
+    try {
+      const Setting = require('../models/Setting');
+      storeSettings = (await Setting.findOne()) || {};
+    } catch (e) {}
+
+    const html = generateInvoiceHtml(order, storeSettings);
+    res.send(html);
+  } catch (error) {
+    res.status(500).send('Error generating invoice HTML');
+  }
+});
+
 // @route   PUT /api/orders/:id/status
 // @desc    Update order status (Admin/Moderator only)
 // @access  Private/Admin
@@ -38,6 +102,11 @@ router.put('/:id/status', protect, moderatorOnly, async (req, res) => {
     
     order.order_status = order_status;
     await order.save();
+
+    // If order confirmed or shipped, automatically trigger invoice email in background
+    if (['confirmed', 'shipped'].includes(order_status)) {
+      sendOrderInvoiceEmail(order).catch(err => console.warn('Auto invoice background email error:', err));
+    }
     
     res.json({ message: 'Order status updated successfully', order });
   } catch (error) {

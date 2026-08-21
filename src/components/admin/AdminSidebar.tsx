@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Crown,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +27,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Package, label: "Products", path: "/admin/products" },
   { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
+  { icon: FileText, label: "Invoices", path: "/admin/invoices" },
   { icon: Users, label: "Users", path: "/admin/users" },
   { icon: FolderTree, label: "Categories", path: "/admin/categories" },
   { icon: Image, label: "Sliders & Banners", path: "/admin/sliders" },

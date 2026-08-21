@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, Truck, Package, CheckCircle, Loader2 } from "lucide-react";
+import { Eye, Truck, Package, CheckCircle, Loader2, FileText, Printer, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { InvoiceModal } from "@/components/admin/InvoiceModal";
 
 type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "refunded";
 
@@ -57,6 +58,7 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
@@ -99,47 +101,51 @@ export default function AdminOrders() {
         },
         body: JSON.stringify({ order_status: newStatus })
       });
-      if (!res.ok) throw new Error("Update failed");
-      
-      setOrders((prev) => prev.map((o) => (o.id === orderId || o._id === orderId ? { ...o, order_status: newStatus } : o)));
-      toast({ title: `Order status updated to ${newStatus}` });
-      if (selectedOrder && (selectedOrder.id === orderId || selectedOrder._id === orderId)) {
-        setSelectedOrder(prev => prev ? { ...prev, order_status: newStatus } : null);
+      if (res.ok) {
+        toast({ title: "Order status updated", description: `Order status set to ${newStatus}` });
+        fetchOrders();
+        if (selectedOrder) {
+          setSelectedOrder({ ...selectedOrder, order_status: newStatus });
+        }
+      } else {
+        throw new Error("Failed to update status");
       }
     } catch (err) {
-      toast({ title: "Failed to update order status", variant: "destructive" });
+      toast({ title: "Error updating status", variant: "destructive" });
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case "delivered": return <CheckCircle className="h-4 w-4" />;
-      case "shipped": return <Truck className="h-4 w-4" />;
-      default: return <Package className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "delivered": return "bg-green-500/20 text-green-400";
-      case "shipped": return "bg-blue-500/20 text-blue-400";
-      case "processing": return "bg-yellow-500/20 text-yellow-400";
-      case "confirmed": return "bg-emerald-500/20 text-emerald-400";
-      case "pending": return "bg-orange-500/20 text-orange-400";
-      case "cancelled": case "refunded": return "bg-red-500/20 text-red-400";
+      case "delivered": return "bg-green-500/10 text-green-500 border-green-500/20";
+      case "shipped": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+      case "processing": return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+      case "confirmed": return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+      case "cancelled": return "bg-red-500/10 text-red-500 border-red-500/20";
+      case "refunded": return "bg-purple-500/10 text-purple-500 border-purple-500/20";
       default: return "bg-muted text-muted-foreground";
     }
   };
 
+  const getStatusIcon = (status: OrderStatus) => {
+    switch (status) {
+      case "delivered": return <CheckCircle className="h-3 w-3" />;
+      case "shipped": return <Truck className="h-3 w-3" />;
+      case "processing":
+      case "confirmed": return <Package className="h-3 w-3" />;
+      default: return null;
+    }
+  };
+
   const filteredOrders = orders.filter((order) => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase();
     return (
-      order.order_number?.toLowerCase().includes(query) ||
-      order.customer_name?.toLowerCase().includes(query) ||
-      order.customer_email?.toLowerCase().includes(query) ||
-      order.shipping_address?.city?.toLowerCase().includes(query) ||
-      order.order_status?.toLowerCase().includes(query)
+      order.order_number?.toLowerCase().includes(q) ||
+      order.customer_name?.toLowerCase().includes(q) ||
+      order.customer_email?.toLowerCase().includes(q) ||
+      order.customer_phone?.toLowerCase().includes(q) ||
+      order.payment_method?.toLowerCase().includes(q) ||
+      order.shipping_address?.city?.toLowerCase().includes(q)
     );
   });
 
@@ -148,7 +154,7 @@ export default function AdminOrders() {
       key: "order_number", header: "Order",
       render: (order: Order) => (
         <div>
-          <p className="font-medium">{order.order_number}</p>
+          <p className="font-medium text-foreground">{order.order_number}</p>
           <p className="text-xs text-muted-foreground">
             {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
           </p>
@@ -159,14 +165,14 @@ export default function AdminOrders() {
       key: "customer_name", header: "Customer",
       render: (order: Order) => (
         <div>
-          <p className="font-medium">{order.customer_name || "N/A"}</p>
-          <p className="text-xs text-muted-foreground">{order.shipping_address?.city || ""}</p>
+          <p className="font-medium text-foreground">{order.customer_name || "N/A"}</p>
+          <p className="text-xs text-muted-foreground">{order.customer_email || order.shipping_address?.city || ""}</p>
         </div>
       ),
     },
     {
       key: "total", header: "Amount",
-      render: (order: Order) => <p className="font-semibold">${Number(order.total || 0).toFixed(2)}</p>,
+      render: (order: Order) => <p className="font-semibold text-foreground">${Number(order.total || 0).toFixed(2)}</p>,
     },
     {
       key: "order_status", header: "Status",
@@ -189,9 +195,20 @@ export default function AdminOrders() {
     {
       key: "actions", header: "Actions",
       render: (order: Order) => (
-        <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(order)}>
-          <Eye className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setInvoiceOrder(order)}
+            className="h-8 gap-1 text-xs px-2.5 bg-primary/10 hover:bg-primary/20 text-primary border-primary/30"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            <span>Invoice</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedOrder(order)}>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -323,14 +340,41 @@ export default function AdminOrders() {
                 <div className="border-t border-border pt-4">
                   <div className="space-y-2 text-sm max-w-[250px] ml-auto">
                     <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${Number(selectedOrder.subtotal || 0).toFixed(2)}</span></div>
+                    {selectedOrder.discount ? (
+                      <div className="flex justify-between text-emerald-500 font-medium"><span>Discount</span><span>-${Number(selectedOrder.discount).toFixed(2)}</span></div>
+                    ) : null}
                     <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${Number(selectedOrder.shipping || 0).toFixed(2)}</span></div>
                     <div className="flex justify-between font-bold text-base border-t border-border pt-2 mt-2"><span>Total</span><span>${Number(selectedOrder.total || 0).toFixed(2)}</span></div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-border">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const current = selectedOrder;
+                        setSelectedOrder(null);
+                        setInvoiceOrder(current);
+                      }}
+                      className="gap-1.5 text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary border-primary/30"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      View / Print Official Invoice
+                    </Button>
                   </div>
                 </div>
               </div>
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Official Printable & Emailable Invoice Modal */}
+        <InvoiceModal
+          order={invoiceOrder}
+          isOpen={!!invoiceOrder}
+          onClose={() => setInvoiceOrder(null)}
+          onInvoiceSent={fetchOrders}
+        />
       </div>
     </AdminLayout>
   );

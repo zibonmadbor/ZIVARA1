@@ -43,6 +43,11 @@ const orderSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  discount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   shipping: {
     type: Number,
     default: 0,
@@ -52,6 +57,14 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 0
+  },
+  invoice_number: {
+    type: String,
+    default: null
+  },
+  invoice_sent_at: {
+    type: Date,
+    default: null
   },
   shipping_address: {
     address: { type: String, required: true },
