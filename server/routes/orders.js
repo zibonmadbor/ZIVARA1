@@ -67,12 +67,19 @@ router.post('/:id/send-invoice', protect, moderatorOnly, async (req, res) => {
 
 // @route   GET /api/orders/:id/invoice-html
 // @desc    Get raw invoice HTML for printing or direct preview
-// @access  Public
-router.get('/:id/invoice-html', async (req, res) => {
+// @access  Private (Owner or Admin/Moderator)
+router.get('/:id/invoice-html', protect, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) {
       return res.status(404).send('Order not found');
+    }
+
+    const isOwner = req.user && order.customer && order.customer.toString() === req.user._id.toString();
+    const isAdminOrMod = req.user && ['admin', 'super_admin', 'moderator'].includes(req.user.role);
+
+    if (!isOwner && !isAdminOrMod) {
+      return res.status(403).send('Access Denied: You are not authorized to view this customer invoice.');
     }
 
     let storeSettings = {};

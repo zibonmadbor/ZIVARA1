@@ -49,14 +49,33 @@ async function getTransporter() {
   return transporter;
 }
 
+function escapeHtml(str) {
+  if (!str || typeof str !== 'string') return str || '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Generate luxury HTML invoice template
 function generateInvoiceHtml(order, storeSettings = {}) {
-  const storeName = storeSettings.storeName || 'ZIVARA';
-  const storeEmail = storeSettings.supportEmail || 'support@zivara.fashion';
-  const storePhone = storeSettings.supportPhone || '+880 1700-000000';
-  const storeAddress = storeSettings.address || 'House 42, Road 11, Banani, Dhaka, Bangladesh';
+  const storeName = escapeHtml(storeSettings.storeName || 'ZIVARA');
+  const storeEmail = escapeHtml(storeSettings.supportEmail || 'support@zivara.fashion');
+  const storePhone = escapeHtml(storeSettings.supportPhone || '+880 1700-000000');
+  const storeAddress = escapeHtml(storeSettings.address || 'House 42, Road 11, Banani, Dhaka, Bangladesh');
   
-  const invoiceNumber = order.invoice_number || `INV-${order.order_number || order._id}`;
+  const customerName = escapeHtml(order.customer_name);
+  const customerEmail = escapeHtml(order.customer_email);
+  const customerPhone = escapeHtml(order.customer_phone);
+  const orderNotes = escapeHtml(order.notes);
+  const deliveryAddr = escapeHtml(order.shipping_address?.address);
+  const deliveryCity = escapeHtml(order.shipping_address?.city);
+  const deliveryZip = escapeHtml(order.shipping_address?.zip_code);
+  const deliveryCountry = escapeHtml(order.shipping_address?.country || 'Bangladesh');
+
+  const invoiceNumber = escapeHtml(order.invoice_number || `INV-${order.order_number || order._id}`);
   const orderDate = new Date(order.createdAt || Date.now()).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -71,8 +90,8 @@ function generateInvoiceHtml(order, storeSettings = {}) {
     <tr style="border-bottom: 1px solid #27272a;">
       <td style="padding: 12px 8px; color: #e4e4e7; font-size: 14px;">${idx + 1}</td>
       <td style="padding: 12px 8px; color: #ffffff; font-size: 14px; font-weight: 500;">
-        ${item.name}
-        ${item.size || item.color ? `<div style="font-size:12px;color:#a1a1aa;margin-top:2px;">Size: ${item.size || 'N/A'} | Color: ${item.color || 'Standard'}</div>` : ''}
+        ${escapeHtml(item.name)}
+        ${item.size || item.color ? `<div style="font-size:12px;color:#a1a1aa;margin-top:2px;">Size: ${escapeHtml(item.size || 'N/A')} | Color: ${escapeHtml(item.color || 'Standard')}</div>` : ''}
       </td>
       <td style="padding: 12px 8px; color: #d4d4d8; font-size: 14px; text-align: center;">${item.quantity}</td>
       <td style="padding: 12px 8px; color: #d4d4d8; font-size: 14px; text-align: right;">$${item.price.toFixed(2)}</td>

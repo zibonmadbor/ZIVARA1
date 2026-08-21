@@ -12,11 +12,45 @@ connectDB();
 
 const app = express();
 
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
 // Middlewares
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false // Allow dynamic Unsplash assets and React frontend
+}));
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' })); // Support larger payloads for Base64 image transfers
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Rate Limiters to prevent Brute-Force & Financial API Draining
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // Limit each IP to 500 requests per window
+  message: { message: 'Too many requests from this IP, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit each IP to 30 Try-On generation requests per 15 mins to prevent API drain
+  message: { message: 'AI Try-On request rate limit exceeded. Please wait a few minutes before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit login attempts to prevent brute force
+  message: { message: 'Too many authentication attempts. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api', globalLimiter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -27,10 +61,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Register routes
-app.use('/api/auth', require('./routes/auth'));
+// Register routes with targeted security limiters
+app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api', require('./routes/products'));
-app.use('/api', require('./routes/ai'));
+app.use('/api', aiLimiter, require('./routes/ai'));
 app.use('/api', require('./routes/sliders'));
 app.use('/api', require('./routes/categories'));
 app.use('/api', require('./routes/settings'));
