@@ -14,10 +14,10 @@ dotenv.config();
 
 const products = [
   {
-    "name": "Emerald Green Silk Satin Evening Gala Gown",
-    "slug": "emerald-green-silk-satin-evening-gala-gown",
-    "price": 389,
-    "originalPrice": 450,
+    "name": "Deep Plum Purple Off-Shoulder Velvet Evening Gown",
+    "slug": "deep-plum-purple-off-shoulder-velvet-evening-gown",
+    "price": 349,
+    "originalPrice": 420,
     "category": "women",
     "subcategory": "Dresses",
     "image": "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=900&auto=format&fit=crop&q=80",
@@ -25,9 +25,9 @@ const products = [
       "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#046307",
-      "#000000",
-      "#C0C0C0"
+      "#800080",
+      "#4A0E4E",
+      "#000000"
     ],
     "sizes": [
       "XS",
@@ -36,16 +36,16 @@ const products = [
       "L",
       "XL"
     ],
-    "description": "Floor-length royal emerald green mulberry silk satin evening gown with a cowl neckline and graceful side slit.",
+    "description": "Elegant off-the-shoulder deep plum purple evening dress tailored with a structured sweetheart bodice and sleek silhouette.",
     "isNew": true,
     "isBestSeller": true,
     "rating": 5,
     "reviews": 182
   },
   {
-    "name": "Structured Midnight Blue Tailored Wool Blazer",
-    "slug": "structured-midnight-blue-tailored-wool-blazer",
-    "price": 320,
+    "name": "Classic Camel Tan Tailored Wool Blazer",
+    "slug": "classic-camel-tan-tailored-wool-blazer",
+    "price": 290,
     "category": "women",
     "subcategory": "Jackets",
     "image": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=900&auto=format&fit=crop&q=80",
@@ -53,9 +53,9 @@ const products = [
       "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#191970",
-      "#000000",
-      "#F5F5DC"
+      "#C2B280",
+      "#D2B48C",
+      "#000000"
     ],
     "sizes": [
       "XS",
@@ -63,16 +63,16 @@ const products = [
       "M",
       "L"
     ],
-    "description": "Bespoke double-breasted midnight navy wool blazer tailored with sharp peaked lapels and horn buttons.",
+    "description": "Double-breasted warm camel tan wool blazer with sharp notched lapels and flap pockets.",
     "isNew": true,
     "rating": 4.9,
     "reviews": 94
   },
   {
-    "name": "Champagne Silk Charmeuse Slip Dress",
-    "slug": "champagne-silk-charmeuse-slip-dress",
-    "price": 245,
-    "originalPrice": 290,
+    "name": "Sunflower Yellow Floral Pattern Midi Slip Dress",
+    "slug": "sunflower-yellow-floral-pattern-midi-slip-dress",
+    "price": 220,
+    "originalPrice": 260,
     "category": "women",
     "subcategory": "Dresses",
     "image": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=900&auto=format&fit=crop&q=80",
@@ -80,8 +80,33 @@ const products = [
       "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#F7E7CE",
-      "#000000",
+      "#FFD700",
+      "#FFF8DC",
+      "#000000"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L"
+    ],
+    "description": "Vibrant sunflower yellow floral print slip dress featuring delicate spaghetti straps and a lightweight flowing drape.",
+    "isSale": true,
+    "rating": 4.8,
+    "reviews": 140
+  },
+  {
+    "name": "Scarlet Red Ruffled Tiered Cocktail Dress",
+    "slug": "scarlet-red-ruffled-tiered-cocktail-dress",
+    "price": 275,
+    "category": "women",
+    "subcategory": "Dresses",
+    "image": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=900&auto=format&fit=crop&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=900&auto=format&fit=crop&q=80"
+    ],
+    "colors": [
+      "#DC143C",
       "#800020"
     ],
     "sizes": [
@@ -90,67 +115,15 @@ const products = [
       "M",
       "L"
     ],
-    "description": "Effortless 90s-inspired bias-cut silk slip dress in luminous champagne with adjustable delicate straps.",
-    "isSale": true,
-    "rating": 4.8,
-    "reviews": 140
-  },
-  {
-    "name": "Crimson Floral Jacquard Midi Cocktail Dress",
-    "slug": "crimson-floral-jacquard-midi-cocktail-dress",
-    "price": 295,
-    "category": "women",
-    "subcategory": "Dresses",
-    "image": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#990000",
-      "#000000"
-    ],
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L"
-    ],
-    "description": "Romantic fitted A-line midi dress tailored in textured floral jacquard with a sweetheart corset neckline.",
+    "description": "Romantic scarlet red tiered summer cocktail dress with flutter sleeves and fitted smocked bodice.",
     "isBestSeller": true,
     "rating": 5,
     "reviews": 112
   },
   {
-    "name": "Cashmere Double-Breasted Wool Overcoat",
-    "slug": "cashmere-double-breasted-wool-overcoat",
-    "price": 520,
-    "originalPrice": 590,
-    "category": "women",
-    "subcategory": "Jackets",
-    "image": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#C2B280",
-      "#000000",
-      "#808080"
-    ],
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL"
-    ],
-    "description": "Tailored luxury camel overcoat spun from pure Mongolian cashmere and virgin wool blend with a waist tie belt.",
-    "rating": 4.9,
-    "reviews": 210
-  },
-  {
-    "name": "High-Waisted Wide-Leg Tailored Silk Trousers",
-    "slug": "high-waisted-wide-leg-tailored-silk-trousers",
-    "price": 210,
+    "name": "Pastel Yellow High-Waist Wide-Leg Palazzo Pants",
+    "slug": "pastel-yellow-high-waist-wide-leg-palazzo-pants",
+    "price": 180,
     "category": "women",
     "subcategory": "Pants",
     "image": "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&auto=format&fit=crop&q=80",
@@ -158,9 +131,9 @@ const products = [
       "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#FAF0E6",
-      "#000000",
-      "#2E8B57"
+      "#FFFFE0",
+      "#FAFAD2",
+      "#000000"
     ],
     "sizes": [
       "XS",
@@ -168,15 +141,15 @@ const products = [
       "M",
       "L"
     ],
-    "description": "Pleated high-rise palazzo trousers cut from heavy fluid crepe silk with a concealed zip closure.",
+    "description": "High-rise tailored wide-leg trousers in pastel yellow fluid crepe silk with clean pleats.",
     "isNew": true,
     "rating": 4.7,
     "reviews": 76
   },
   {
-    "name": "Sheer Organza Puff-Sleeve Luxury Blouse",
-    "slug": "sheer-organza-puff-sleeve-luxury-blouse",
-    "price": 185,
+    "name": "Mustard Yellow Minimalist Fitted Crop Top",
+    "slug": "mustard-yellow-minimalist-fitted-crop-top",
+    "price": 95,
     "category": "women",
     "subcategory": "Tops",
     "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
@@ -184,9 +157,9 @@ const products = [
       "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#FFFFFF",
-      "#000000",
-      "#FFB6C1"
+      "#FFDB58",
+      "#D4AF37",
+      "#000000"
     ],
     "sizes": [
       "XS",
@@ -194,14 +167,14 @@ const products = [
       "M",
       "L"
     ],
-    "description": "Ethereal sheer silk organza blouse featuring dramatic voluminous bishop sleeves and a mock pussybow collar.",
+    "description": "Chic modern mustard yellow sleeveless crop top paired with high-waist styling.",
     "rating": 4.8,
     "reviews": 88
   },
   {
-    "name": "Shimmering Gold Sequin Halter Evening Dress",
-    "slug": "shimmering-gold-sequin-halter-evening-dress",
-    "price": 360,
+    "name": "Bohemian Floral Tiered Summer Beach Maxi Dress",
+    "slug": "bohemian-floral-tiered-summer-beach-maxi-dress",
+    "price": 210,
     "category": "women",
     "subcategory": "Dresses",
     "image": "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=900&auto=format&fit=crop&q=80",
@@ -209,8 +182,9 @@ const products = [
       "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
+      "#FAF0E6",
       "#D4AF37",
-      "#C0C0C0"
+      "#87CEEB"
     ],
     "sizes": [
       "XS",
@@ -218,15 +192,15 @@ const products = [
       "M",
       "L"
     ],
-    "description": "Dazzling champagne gold micro-sequin cocktail dress with a sophisticated mock neckline and open back.",
+    "description": "Airy bohemian printed maxi dress with lightweight tiered hem and natural floral prints.",
     "isBestSeller": true,
     "rating": 4.9,
     "reviews": 95
   },
   {
-    "name": "Linen Blend Structured Corset Top",
-    "slug": "linen-blend-structured-corset-top",
-    "price": 159,
+    "name": "Off-White Ribbed Knit Fitted Halter Top",
+    "slug": "off-white-ribbed-knit-fitted-halter-top",
+    "price": 79,
     "category": "women",
     "subcategory": "Tops",
     "image": "https://images.unsplash.com/photo-1551803091-e20673f15770?w=900&auto=format&fit=crop&q=80",
@@ -234,7 +208,7 @@ const products = [
       "https://images.unsplash.com/photo-1551803091-e20673f15770?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#FFFFFF",
+      "#FFFFF0",
       "#F5F5DC",
       "#000000"
     ],
@@ -244,25 +218,25 @@ const products = [
       "M",
       "L"
     ],
-    "description": "Structured corset top in breathable natural linen with boning detail and lace-up back.",
+    "description": "Breathable ribbed knit off-white halter top with clean minimal lines and comfortable stretch.",
     "isNew": true,
     "rating": 4.8,
     "reviews": 45
   },
   {
-    "name": "Silk Satin Bias Cut Midi Skirt",
-    "slug": "silk-satin-bias-cut-midi-skirt",
-    "price": 165,
+    "name": "Classic Beige Minimalist Trench Coat",
+    "slug": "classic-beige-minimalist-trench-coat",
+    "price": 320,
     "category": "women",
-    "subcategory": "Skirts",
+    "subcategory": "Jackets",
     "image": "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=900&auto=format&fit=crop&q=80",
     "images": [
       "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#000000",
+      "#D2B48C",
       "#F5F5DC",
-      "#2E8B57"
+      "#000000"
     ],
     "sizes": [
       "XS",
@@ -270,15 +244,15 @@ const products = [
       "M",
       "L"
     ],
-    "description": "Fluid bias-cut silk midi skirt with an elasticated interior waist for clean drape.",
+    "description": "Water-repellent tailored beige trench coat with storm flap, belted waist, and wrist buckles.",
     "isSale": true,
     "rating": 4.8,
     "reviews": 64
   },
   {
-    "name": "High-Rise Vintage Straight Jeans",
-    "slug": "high-rise-vintage-straight-jeans",
-    "price": 145,
+    "name": "Light Blue High-Rise Straight Leg Jeans",
+    "slug": "light-blue-high-rise-straight-leg-jeans",
+    "price": 135,
     "category": "women",
     "subcategory": "Pants",
     "image": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=900&auto=format&fit=crop&q=80",
@@ -286,9 +260,9 @@ const products = [
       "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
+      "#87CEEB",
       "#4682B4",
-      "#000080",
-      "#000000"
+      "#000080"
     ],
     "sizes": [
       "24",
@@ -299,15 +273,15 @@ const products = [
       "29",
       "30"
     ],
-    "description": "Classic 90s inspired high-rise straight leg jeans crafted from 100% rigid cotton denim.",
+    "description": "Vintage washed light indigo denim straight-leg jeans with high-rise waist.",
     "rating": 4.7,
     "reviews": 112
   },
   {
-    "name": "Dhakai Jamdani Pure Silk Handloom Saree",
-    "slug": "dhakai-jamdani-pure-silk-handloom-saree",
-    "price": 280,
-    "originalPrice": 320,
+    "name": "Traditional Golden Yellow & Red Zari Border Saree",
+    "slug": "traditional-golden-yellow-red-zari-border-saree",
+    "price": 240,
+    "originalPrice": 290,
     "category": "women",
     "subcategory": "Sarees",
     "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=900&auto=format&fit=crop&q=80",
@@ -315,34 +289,33 @@ const products = [
       "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#800000",
       "#FFD700",
-      "#000000"
+      "#DC143C",
+      "#800000"
     ],
     "sizes": [
       "Free Size"
     ],
-    "description": "Authentic traditional Dhakai Jamdani handloom saree woven with intricate geometric floral motifs and shimmering golden zari border.",
+    "description": "Traditional handloom silk saree in radiant golden yellow with intricate red and gold metallic zari pallu.",
     "isNew": true,
     "isBestSeller": true,
     "rating": 5,
     "reviews": 145
   },
   {
-    "name": "Designer Crimson Silk Salwar Kameez Three-Piece Set",
-    "slug": "designer-crimson-silk-salwar-kameez-three-piece-set",
+    "name": "Embroidered Maroon & Gold Festive Anarkali Kurti",
+    "slug": "embroidered-maroon-gold-festive-anarkali-kurti",
     "price": 195,
-    "originalPrice": 230,
     "category": "women",
-    "subcategory": "Salwar Kameez",
+    "subcategory": "Kurtis",
     "image": "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=900&auto=format&fit=crop&q=80",
     "images": [
       "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#DC143C",
+      "#800000",
       "#FFD700",
-      "#800020"
+      "#000000"
     ],
     "sizes": [
       "XS",
@@ -351,15 +324,15 @@ const products = [
       "L",
       "XL"
     ],
-    "description": "Luxurious pure silk 3-piece salwar kameez set adorned with intricate neckline resham embroidery and a matching organza dupatta.",
+    "description": "Flowing floor-length festive ethnic Kurti in rich deep maroon with handcrafted gold embroidery along the neckline.",
     "isSale": true,
     "rating": 4.9,
     "reviews": 98
   },
   {
-    "name": "Royal Blue Tangail Handloom Cotton Saree",
-    "slug": "royal-blue-tangail-handloom-cotton-saree",
-    "price": 160,
+    "name": "Vibrant Red & Gold Handloom Silk Saree",
+    "slug": "vibrant-red-gold-handloom-silk-saree",
+    "price": 210,
     "category": "women",
     "subcategory": "Sarees",
     "image": "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=900&auto=format&fit=crop&q=80",
@@ -367,122 +340,22 @@ const products = [
       "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#000080",
+      "#DC143C",
       "#FFD700",
-      "#1E90FF"
+      "#800020"
     ],
     "sizes": [
       "Free Size"
     ],
-    "description": "Classic Bengali Tangail handloom saree featuring fine cotton weave, vibrant royal blue hue, and traditional temple borders.",
+    "description": "Classic crimson red handloom saree adorned with traditional temple weave and gleaming golden border.",
     "rating": 4.8,
     "reviews": 82
   },
   {
-    "name": "Rajshahi Silk Floral Embroidered Anarkali Kurti",
-    "slug": "rajshahi-silk-floral-embroidered-anarkali-kurti",
-    "price": 175,
-    "category": "women",
-    "subcategory": "Kurtis",
-    "image": "https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#FF69B4",
-      "#FFD700",
-      "#4B0082"
-    ],
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL"
-    ],
-    "description": "Flowing Rajshahi silk floor-length Anarkali kurti featuring handcrafted floral zari embroidery along the bodice and hemline.",
-    "isNew": true,
-    "rating": 4.9,
-    "reviews": 110
-  },
-  {
-    "name": "Ribbed Knit Minimalist Tank Top",
-    "slug": "ribbed-knit-minimalist-tank-top",
-    "price": 65,
-    "category": "women",
-    "subcategory": "Tops",
-    "image": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#FFFFFF",
-      "#000000",
-      "#D2B48C"
-    ],
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L"
-    ],
-    "description": "Soft stretch ribbed knit scoop-neck tank top, ideal for layered luxury.",
-    "rating": 4.8,
-    "reviews": 55
-  },
-  {
-    "name": "Bohemian Linen Summer Beach Dress",
-    "slug": "bohemian-linen-summer-beach-dress",
-    "price": 140,
-    "category": "women",
-    "subcategory": "Dresses",
-    "image": "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#FAF0E6",
-      "#87CEEB"
-    ],
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L"
-    ],
-    "description": "Breezy pure linen relaxed summer dress with gentle puff sleeves and tiered skirt.",
-    "rating": 4.8,
-    "reviews": 62
-  },
-  {
-    "name": "Tailored Cropped Wool Jacket",
-    "slug": "tailored-cropped-wool-jacket",
-    "price": 260,
-    "category": "women",
-    "subcategory": "Jackets",
-    "image": "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#36454F",
-      "#000000"
-    ],
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L"
-    ],
-    "description": "Structured cropped blazer jacket with sharp shoulders and satin lining.",
-    "rating": 4.9,
-    "reviews": 80
-  },
-  {
-    "name": "Midnight Navy Bespoke Italian Wool Tuxedo",
-    "slug": "midnight-navy-bespoke-italian-wool-tuxedo",
-    "price": 650,
-    "originalPrice": 750,
+    "name": "Navy Blue Bespoke Formal Tuxedo with Black Shawl Lapels",
+    "slug": "navy-blue-bespoke-formal-tuxedo-black-shawl-lapels",
+    "price": 580,
+    "originalPrice": 680,
     "category": "men",
     "subcategory": "Jackets",
     "image": "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&auto=format&fit=crop&q=80",
@@ -491,7 +364,8 @@ const products = [
     ],
     "colors": [
       "#000080",
-      "#000000"
+      "#000000",
+      "#FFFFFF"
     ],
     "sizes": [
       "38R",
@@ -500,15 +374,15 @@ const products = [
       "44R",
       "46R"
     ],
-    "description": "Handcrafted Super 150s Italian wool tuxedo jacket with black grosgrain shawl lapels and matching dress trousers.",
+    "description": "Handcrafted midnight navy formal tuxedo jacket with black grosgrain shawl collar and matching dress pants.",
     "isNew": true,
     "isBestSeller": true,
     "rating": 5,
     "reviews": 145
   },
   {
-    "name": "Royal Black Formal Double-Breasted Suit & Blazer",
-    "slug": "royal-black-formal-double-breasted-suit-blazer",
+    "name": "Classic Black Double-Breasted Tailored Suit & Blazer",
+    "slug": "classic-black-double-breasted-tailored-suit-blazer",
     "price": 490,
     "category": "men",
     "subcategory": "Jackets",
@@ -518,6 +392,7 @@ const products = [
     ],
     "colors": [
       "#000000",
+      "#FFFFFF",
       "#36454F"
     ],
     "sizes": [
@@ -526,16 +401,16 @@ const products = [
       "42R",
       "44R"
     ],
-    "description": "Sharp black double-breasted formal blazer paired with tailored collar and pocket square for black-tie gala wear.",
+    "description": "Sharp black double-breasted tailored blazer suit paired with crisp white dress shirt and pocket square.",
     "isBestSeller": true,
     "rating": 4.9,
     "reviews": 110
   },
   {
-    "name": "Classic Italian Linen White Summer Cuban Shirt",
-    "slug": "classic-italian-linen-white-summer-cuban-shirt",
-    "price": 135,
-    "originalPrice": 160,
+    "name": "Pure White Linen Long-Sleeve Casual Button Shirt",
+    "slug": "pure-white-linen-long-sleeve-casual-button-shirt",
+    "price": 125,
+    "originalPrice": 150,
     "category": "men",
     "subcategory": "T-Shirts",
     "image": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=900&auto=format&fit=crop&q=80",
@@ -544,8 +419,7 @@ const products = [
     ],
     "colors": [
       "#FFFFFF",
-      "#F5F5DC",
-      "#87CEEB"
+      "#F5F5DC"
     ],
     "sizes": [
       "S",
@@ -554,15 +428,15 @@ const products = [
       "XL",
       "XXL"
     ],
-    "description": "Pure French flax linen relaxed resort shirt featuring an open camp collar, mother-of-pearl buttons, and straight hem.",
+    "description": "Relaxed breathable pure white linen long-sleeve button-up shirt with spread collar.",
     "isSale": true,
     "rating": 4.8,
     "reviews": 215
   },
   {
-    "name": "Classic Black Leather Biker Moto Jacket",
-    "slug": "classic-black-leather-biker-moto-jacket",
-    "price": 590,
+    "name": "Heavyweight Black Leather Asymmetric Biker Moto Jacket",
+    "slug": "heavyweight-black-leather-asymmetric-biker-moto-jacket",
+    "price": 540,
     "category": "men",
     "subcategory": "Jackets",
     "image": "https://images.unsplash.com/photo-1521223890158-f9f7c3d5d504?w=900&auto=format&fit=crop&q=80",
@@ -571,7 +445,7 @@ const products = [
     ],
     "colors": [
       "#000000",
-      "#4A0E17"
+      "#2F4F4F"
     ],
     "sizes": [
       "S",
@@ -580,14 +454,14 @@ const products = [
       "XL",
       "XXL"
     ],
-    "description": "Heavyweight full-grain black leather motorcycle jacket with asymmetrical silver chrome zips and snap-down lapels.",
+    "description": "Full-grain genuine black leather motorcycle jacket with silver hardware, snap lapels, and asymmetrical zip.",
     "isBestSeller": true,
     "rating": 5,
     "reviews": 320
   },
   {
-    "name": "Classic Navy Blue Tailored Formal Suit & Blazer",
-    "slug": "classic-navy-blue-tailored-formal-suit-blazer",
+    "name": "Tailored Navy Blue Two-Piece Suit & White Shirt",
+    "slug": "tailored-navy-blue-two-piece-suit-white-shirt",
     "price": 480,
     "category": "men",
     "subcategory": "Jackets",
@@ -606,7 +480,7 @@ const products = [
       "42R",
       "44R"
     ],
-    "description": "Sharp bespoke navy blue tailored two-piece suit jacket paired with a crisp white collared dress shirt and pocket square.",
+    "description": "Bespoke navy blue two-piece formal suit paired with a crisp white collared dress shirt and white pocket square.",
     "isNew": true,
     "rating": 4.9,
     "reviews": 105
@@ -614,7 +488,7 @@ const products = [
   {
     "name": "Vintage Washed Indigo Denim Trucker Jacket",
     "slug": "vintage-washed-indigo-denim-trucker-jacket",
-    "price": 220,
+    "price": 195,
     "category": "men",
     "subcategory": "Jackets",
     "image": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=900&auto=format&fit=crop&q=80",
@@ -623,8 +497,8 @@ const products = [
     ],
     "colors": [
       "#1E3F66",
-      "#000080",
-      "#000000"
+      "#4682B4",
+      "#000080"
     ],
     "sizes": [
       "S",
@@ -632,14 +506,14 @@ const products = [
       "L",
       "XL"
     ],
-    "description": "Authentic 14oz selvedge indigo denim jacket with vintage whisker wash, brass button hardware, and chest flap pockets.",
+    "description": "Classic 100% cotton selvedge blue denim jacket with contrast stitching and chest pockets.",
     "rating": 4.8,
     "reviews": 115
   },
   {
-    "name": "Smart Casual Oxford Blue Button-Down Shirt",
-    "slug": "smart-casual-oxford-blue-button-down-shirt",
-    "price": 115,
+    "name": "Classic Light Blue Oxford Cotton Dress Shirt",
+    "slug": "classic-light-blue-oxford-cotton-dress-shirt",
+    "price": 110,
     "category": "men",
     "subcategory": "T-Shirts",
     "image": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=900&auto=format&fit=crop&q=80",
@@ -647,9 +521,9 @@ const products = [
       "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#4682B4",
+      "#87CEEB",
       "#FFFFFF",
-      "#C0C0C0"
+      "#4682B4"
     ],
     "sizes": [
       "S",
@@ -658,127 +532,25 @@ const products = [
       "XL",
       "XXL"
     ],
-    "description": "Heavyweight 100% organic cotton Oxford cloth shirt tailored with a button-down collar and curved hem.",
+    "description": "Tailored long-sleeve light blue Oxford cloth button-down shirt made of 100% organic cotton.",
     "rating": 4.9,
     "reviews": 130
   },
   {
-    "name": "Monochrome Graphic Print Streetwear T-Shirt",
-    "slug": "monochrome-graphic-print-streetwear-t-shirt",
-    "price": 65,
-    "category": "men",
-    "subcategory": "T-Shirts",
-    "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#000000",
-      "#FFFFFF"
-    ],
-    "sizes": [
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "description": "260GSM combed cotton boxy tee with high-density architectural typography print.",
-    "isNew": true,
-    "rating": 4.8,
-    "reviews": 67
-  },
-  {
-    "name": "Urban Streetwear Heavyweight Charcoal Boxy Hoodie",
-    "slug": "urban-streetwear-heavyweight-charcoal-boxy-hoodie",
-    "price": 160,
-    "category": "men",
-    "subcategory": "Sweaters",
-    "image": "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#36454F",
-      "#000000",
-      "#556B2F"
-    ],
-    "sizes": [
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "description": "Luxury 480GSM organic heavyweight cotton hoodie in washed charcoal black with a structured drop-shoulder boxy fit.",
-    "rating": 4.8,
-    "reviews": 140
-  },
-  {
-    "name": "Relaxed Fit Casual Linen Trousers",
-    "slug": "relaxed-fit-casual-linen-trousers",
-    "price": 110,
-    "category": "men",
-    "subcategory": "Pants",
-    "image": "https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#C2B280",
-      "#000000",
-      "#FFFFFF"
-    ],
-    "sizes": [
-      "30",
-      "32",
-      "34",
-      "36"
-    ],
-    "description": "Contemporary relaxed-tapered linen trousers with front pleats and side welt pockets.",
-    "rating": 4.8,
-    "reviews": 75
-  },
-  {
-    "name": "Classic Beige Minimalist Trench Coat",
-    "slug": "classic-beige-minimalist-trench-coat",
-    "price": 380,
-    "category": "men",
-    "subcategory": "Jackets",
-    "image": "https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#D2B48C",
-      "#000000"
-    ],
-    "sizes": [
-      "38R",
-      "40R",
-      "42R",
-      "44R"
-    ],
-    "description": "Water-resistant cotton gabardine tailored overcoat with storm flap and belt closure.",
-    "rating": 4.9,
-    "reviews": 95
-  },
-  {
-    "name": "Festive Tussar Silk Hand-Embroidered Panjabi",
-    "slug": "festive-tussar-silk-hand-embroidered-panjabi",
+    "name": "Charcoal Grey Shawl Collar Knit Wool Sweater",
+    "slug": "charcoal-grey-shawl-collar-knit-wool-sweater",
     "price": 165,
     "originalPrice": 195,
     "category": "men",
-    "subcategory": "Panjabis",
+    "subcategory": "Sweaters",
     "image": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=900&auto=format&fit=crop&q=80",
     "images": [
       "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#D4AF37",
-      "#800020",
-      "#FFFFFF",
-      "#000000"
+      "#36454F",
+      "#000000",
+      "#808080"
     ],
     "sizes": [
       "38",
@@ -787,174 +559,43 @@ const products = [
       "44",
       "46"
     ],
-    "description": "Traditional Bangladeshi festive Tussar silk Panjabi featuring intricate thread embroidery along the mandarin collar and front placket.",
+    "description": "Heavyweight textured wool knit pullover sweater in heathered charcoal grey with buttoned shawl collar.",
     "isNew": true,
     "isBestSeller": true,
     "rating": 5,
     "reviews": 162
   },
   {
-    "name": "Kids Festive Embroidered Panjabi & Pajama Set",
-    "slug": "kids-festive-embroidered-panjabi-pajama-set",
-    "price": 65,
-    "originalPrice": 80,
-    "category": "kids",
-    "subcategory": "Panjabis",
-    "image": "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#D4AF37",
-      "#800020",
-      "#FFFFFF",
-      "#1E90FF"
-    ],
-    "sizes": [
-      "2Y",
-      "4Y",
-      "6Y",
-      "8Y",
-      "10Y"
-    ],
-    "description": "Adorable festive cotton silk Panjabi with delicate thread embroidery on collar and chest, paired with soft white cotton pajama.",
-    "isNew": true,
-    "isBestSeller": true,
-    "rating": 4.9,
-    "reviews": 94
-  },
-  {
-    "name": "Kids Traditional Floral Silk Lehenga Choli Set",
-    "slug": "kids-traditional-floral-silk-lehenga-choli-set",
-    "price": 78,
-    "category": "kids",
-    "subcategory": "Lehengas",
-    "image": "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#FF69B4",
-      "#FFD700",
-      "#E6E6FA"
-    ],
-    "sizes": [
-      "2Y",
-      "4Y",
-      "6Y",
-      "8Y"
-    ],
-    "description": "Festive traditional silk flared lehenga and choli set adorned with golden gotta patti borders and matching sheer dupatta.",
-    "isSale": true,
-    "rating": 4.9,
-    "reviews": 78
-  },
-  {
-    "name": "Junior Winter Puffer Jacket with Hood",
-    "slug": "junior-winter-puffer-jacket-with-hood",
-    "price": 110,
-    "category": "kids",
+    "name": "Camel Tan Wool Overcoat over Black Turtleneck",
+    "slug": "camel-tan-wool-overcoat-over-black-turtleneck",
+    "price": 490,
+    "originalPrice": 560,
+    "category": "men",
     "subcategory": "Jackets",
-    "image": "https://images.unsplash.com/photo-1514090458221-65bb69cf63e6?w=900&auto=format&fit=crop&q=80",
+    "image": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=900&auto=format&fit=crop&q=80",
     "images": [
-      "https://images.unsplash.com/photo-1514090458221-65bb69cf63e6?w=900&auto=format&fit=crop&q=80"
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#FF4500",
+      "#C2B280",
       "#000000",
-      "#1E90FF"
+      "#36454F"
     ],
     "sizes": [
-      "4Y",
-      "6Y",
-      "8Y",
-      "10Y",
-      "12Y"
+      "38R",
+      "40R",
+      "42R",
+      "44R",
+      "46R"
     ],
-    "description": "Warm fleece-lined hooded puffer jacket with reflective safety detailing.",
-    "isBestSeller": true,
-    "rating": 4.9,
-    "reviews": 115
-  },
-  {
-    "name": "Girls Floral Summer Party Dress",
-    "slug": "girls-floral-summer-party-dress",
-    "price": 82,
-    "category": "kids",
-    "subcategory": "Dresses",
-    "image": "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#FFC0CB",
-      "#FFFFFF",
-      "#FFFFE0"
-    ],
-    "sizes": [
-      "3Y",
-      "5Y",
-      "7Y",
-      "9Y"
-    ],
-    "description": "Charming twirl-worthy cotton dress featuring hand-embroidered flowers and bow tie sash.",
-    "rating": 4.9,
-    "reviews": 78
-  },
-  {
-    "name": "Cozy Cotton Fleece Sweatpants & Hoodie Set",
-    "slug": "cozy-cotton-fleece-sweatpants-hoodie-set",
-    "price": 68,
-    "category": "kids",
-    "subcategory": "Sweaters",
-    "image": "https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#FFB6C1",
-      "#E0FFFF",
-      "#FFF8DC"
-    ],
-    "sizes": [
-      "2Y",
-      "4Y",
-      "6Y",
-      "8Y"
-    ],
-    "description": "Cozy 2-piece fleece hoodie and matching sweatpants set made with hypoallergenic organic cotton.",
-    "rating": 4.8,
-    "reviews": 64
-  },
-  {
-    "name": "Kids Organic Denim Dungarees Overalls",
-    "slug": "kids-organic-denim-dungarees-overalls",
-    "price": 75,
-    "category": "kids",
-    "subcategory": "Pants",
-    "image": "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#4682B4",
-      "#1E90FF"
-    ],
-    "sizes": [
-      "2Y",
-      "4Y",
-      "6Y",
-      "8Y",
-      "10Y"
-    ],
-    "description": "Durable and soft organic cotton denim overalls with adjustable shoulder clasps.",
+    "description": "Luxury Italian camel wool tailored long overcoat worn over a fitted black ribbed knit turtleneck.",
     "isNew": true,
     "rating": 4.9,
-    "reviews": 82
+    "reviews": 190
   },
   {
-    "name": "Luxury Quilted Leather Chain Crossbody Handbag",
-    "slug": "luxury-quilted-leather-chain-crossbody-handbag",
+    "name": "Black Quilted Chevron Leather Crossbody Bag",
+    "slug": "black-quilted-chevron-leather-crossbody-bag",
     "price": 340,
     "category": "accessories",
     "subcategory": "Handbags",
@@ -964,20 +605,19 @@ const products = [
     ],
     "colors": [
       "#000000",
-      "#800020",
-      "#FAF0E6"
+      "#FFD700"
     ],
     "sizes": [
-      "Medium"
+      "One Size"
     ],
-    "description": "Chevron quilted calfskin leather handbag with antique gold sliding chain strap and turn-lock clasp.",
+    "description": "Genuine black calfskin leather quilted handbag with gold-tone chain strap and front flap clasp.",
     "isBestSeller": true,
     "rating": 5,
     "reviews": 210
   },
   {
-    "name": "Minimalist Rose Gold Mesh Analog Watch",
-    "slug": "minimalist-rose-gold-mesh-analog-watch",
+    "name": "Minimalist Rose Gold Mesh Strap Analog Watch",
+    "slug": "minimalist-rose-gold-mesh-strap-analog-watch",
     "price": 245,
     "category": "accessories",
     "subcategory": "Watches",
@@ -994,13 +634,13 @@ const products = [
       "36mm",
       "40mm"
     ],
-    "description": "Swiss quartz movement analog watch featuring ultra-thin rose gold casing and stainless steel mesh strap.",
+    "description": "Ultra-thin analog timepiece featuring rose gold-tone stainless steel casing and woven mesh strap.",
     "rating": 4.9,
     "reviews": 185
   },
   {
-    "name": "Polarized Teardrop Gold Aviator Sunglasses",
-    "slug": "polarized-teardrop-gold-aviator-sunglasses",
+    "name": "Classic Gold Frame Polarized Aviator Sunglasses",
+    "slug": "classic-gold-frame-polarized-aviator-sunglasses",
     "price": 135,
     "category": "accessories",
     "subcategory": "Sunglasses",
@@ -1010,84 +650,19 @@ const products = [
     ],
     "colors": [
       "#FFD700",
-      "#C0C0C0"
+      "#006400",
+      "#000000"
     ],
     "sizes": [
       "One Size"
     ],
-    "description": "Timeless teardrop aviator frame in polished gold alloy with UV400 polarized green-tinted lenses.",
+    "description": "Gold-tone metal frame aviator sunglasses with UV400 polarized dark green lenses.",
     "rating": 4.8,
     "reviews": 118
   },
   {
-    "name": "Handcrafted Full-Grain Leather Messenger Bag",
-    "slug": "handcrafted-full-grain-leather-messenger-bag",
-    "price": 210,
-    "category": "accessories",
-    "subcategory": "Handbags",
-    "image": "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#8B4513",
-      "#000000"
-    ],
-    "sizes": [
-      "Medium",
-      "Large"
-    ],
-    "description": "Full-grain pull-up leather satchel with padded 14-inch laptop compartment and brass hardware.",
-    "isBestSeller": true,
-    "rating": 4.9,
-    "reviews": 160
-  },
-  {
-    "name": "Pure Cashmere Monogram Jacquard Scarf",
-    "slug": "pure-cashmere-monogram-jacquard-scarf",
-    "price": 145,
-    "category": "accessories",
-    "subcategory": "Scarves",
-    "image": "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#C2B280",
-      "#808080",
-      "#000000"
-    ],
-    "sizes": [
-      "One Size"
-    ],
-    "description": "Jacquard woven cashmere scarf with fringed hem edges and subtle logo pattern.",
-    "isNew": true,
-    "rating": 4.9,
-    "reviews": 94
-  },
-  {
-    "name": "18K Gold Plated Chain Layered Necklace",
-    "slug": "18k-gold-plated-chain-layered-necklace",
-    "price": 95,
-    "category": "accessories",
-    "subcategory": "Jewelry",
-    "image": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#FFD700"
-    ],
-    "sizes": [
-      "One Size"
-    ],
-    "description": "Delicate triple-strand herringbone and curb chain necklace dipped in 18K yellow gold.",
-    "rating": 4.8,
-    "reviews": 82
-  },
-  {
-    "name": "Italian Leather Reversible Dress Belt",
-    "slug": "italian-leather-reversible-dress-belt",
+    "name": "Brown Italian Calfskin Leather Reversible Belt",
+    "slug": "brown-italian-calfskin-leather-reversible-belt",
     "price": 75,
     "category": "accessories",
     "subcategory": "Belts",
@@ -1096,8 +671,8 @@ const products = [
       "https://images.unsplash.com/photo-1627123424574-724758594e93?w=900&auto=format&fit=crop&q=80"
     ],
     "colors": [
-      "#000000",
-      "#8B4513"
+      "#8B4513",
+      "#000000"
     ],
     "sizes": [
       "32",
@@ -1106,33 +681,10 @@ const products = [
       "38",
       "40"
     ],
-    "description": "32mm genuine Italian calfskin belt that rotates between classic black and rich cognac brown.",
+    "description": "Handmade genuine leather dress belt with polished silver brushed buckle.",
     "isSale": true,
     "rating": 4.8,
     "reviews": 96
-  },
-  {
-    "name": "Australian Wool Wide-Brim Fedora Hat",
-    "slug": "australian-wool-wide-brim-fedora-hat",
-    "price": 110,
-    "category": "accessories",
-    "subcategory": "Hats",
-    "image": "https://images.unsplash.com/photo-1521369909029-2afed882baee?w=900&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1521369909029-2afed882baee?w=900&auto=format&fit=crop&q=80"
-    ],
-    "colors": [
-      "#000000",
-      "#C2B280",
-      "#556B2F"
-    ],
-    "sizes": [
-      "S/M",
-      "L/XL"
-    ],
-    "description": "Structured wide-brim felt hat crafted from 100% Australian wool with a genuine leather band.",
-    "rating": 4.9,
-    "reviews": 71
   }
 ];
 
