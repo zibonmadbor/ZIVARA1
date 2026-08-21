@@ -68,20 +68,31 @@ router.post('/ai/tryon', async (req, res) => {
     console.log(`  → User image: ${(userBuffer.length / 1024).toFixed(0)}KB | Garment image: ${(clothingBuffer.length / 1024).toFixed(0)}KB`);
     console.log(`  → Product: ${clothingName || 'Garment'} [Category: ${clothingGender || 'Unspecified'}] (${clothingType || 'Apparel'})`);
 
-    // High-precision prompt with strict color, pattern, and design replication
-    const prompt = `High-end photorealistic virtual try-on fashion photography.
-TASK: Dress the person in Image 1 in the EXACT clothing shown in Image 2.
+    // Hyper-realistic precision inpainting & identity-locked virtual try-on prompt
+    const prompt = `[PHOTO INPAINTING & CLOTHING REPLACEMENT TASK]
 
-GARMENT SPECIFICATIONS:
-- Item: "${clothingName || 'Garment'}" (${clothingGender || 'Apparel'} - ${clothingType || 'Clothing'})
-- Description: ${clothingDescription || 'Matching image 2'}
+ROLES OF INPUT IMAGES:
+- Image 1 (PRIMARY MASTER): The real photo of the person. You MUST preserve their exact real identity, original face, eyes, nose, lips, facial hair, skin texture and pores, hair, head shape, body build, posture, and original background 100% untouched and identical.
+- Image 2 (GARMENT REFERENCE): The exact target clothing item to be transferred onto the person's body: "${clothingName || 'Garment'}" (${clothingGender || 'Apparel'} - ${clothingType || 'Clothing'}).
 ${colorHint}
+${clothingDescription ? `- Garment Description: ${clothingDescription}` : ''}
 
-CRITICAL RULES FOR ACCURACY:
-1. STRICT VISUAL COLOR & PATTERN FIDELITY: The clothing worn on the person MUST match the EXACT colors, hues, prints, textures, patterns, and fabric material visible in Image 2. Look closely at Image 2: if Image 2 shows a Navy Blue suit, the person MUST wear a Navy Blue suit; if Image 2 is white/gold, output white/gold; if red, output red. NEVER invert, change, or substitute colors.
-2. EXACT GARMENT & COMPLETE LAYERING: Replicate the precise apparel design and cut from Image 2. If the garment is a blazer, suit jacket, or coat, ALWAYS include an appropriate inner shirt (e.g. a crisp collared white dress shirt or undershirt as seen in Image 2). NEVER render a suit or blazer over bare skin.
-3. PRESERVE IDENTITY & BACKGROUND 100%: Keep the person's exact face, facial features, sunglasses/glasses, eyes, hair, skin tone, body pose, and natural background from Image 1 100% authentic and unchanged. ONLY replace their current clothes with the new outfit from Image 2.
-4. REALISTIC DRAPING & LIGHTING: The clothing must fit naturally with organic fabric folds, contact shadows under the collar and seams, conforming to their body posture.${genderDirective}`;
+MANDATORY EDITING RULES:
+1. ZERO FACE / IDENTITY MODIFICATION (CRITICAL):
+   - DO NOT redraw, morph, generate, beautify, or alter the person's face in any way.
+   - Retain 100% of their exact facial features, skin tone, natural pores, expression, blemishes, eyeglasses, and hairstyle exactly as seen in Image 1.
+   - Avoid artificial plastic smoothing or cartoonish AI look; preserve raw photographic reality.
+
+2. SEAMLESS CLOTHING TRANSFER:
+   - Carefully remove ONLY the clothes currently worn in Image 1, and dress the person in the EXACT clothing from Image 2.
+   - The new garment must conform naturally to the person's physical body contours, shoulder width, and pose with realistic fabric drape, organic folds, and natural gravity.
+   - Ensure clean, realistic transitions and contact shadows around the neckline, collar, shoulders, arms, and waist.
+
+3. COLOR & DETAIL LOCK:
+   - Accurately replicate the exact color shades, patterns, fabric textures, buttons, zippers, lapels, and stitching from Image 2.
+   - If Image 2 is a suit, blazer, or jacket, ALWAYS include an appropriate inner shirt (such as a crisp white dress shirt or matching inner tee) underneath, ensuring natural and complete professional layering. NEVER render an open blazer over a bare chest.${genderDirective}
+
+OUTPUT: A single ultra-realistic, natural photographic result showing the exact person from Image 1 naturally wearing the outfit from Image 2.`;
 
     console.log('  → Calling Replicate google/nano-banana (Gemini 2.5 Flash Image)...');
 
